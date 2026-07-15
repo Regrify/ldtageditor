@@ -15,6 +15,7 @@
         android:supportsRtl="true">
         <activity
             android:name="com.ld.tageditor.MainActivity"
+            android:exported="true"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

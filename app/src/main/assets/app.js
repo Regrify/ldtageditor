@@ -3245,84 +3245,6 @@ var $$rAFSchedulerFactory = ['$$rAF', function($$rAF) {
   }
 }];
 
-/**
- * @ngdoc directive
- * @name ngAnimateChildren
- * @restrict AE
- * @element ANY
- *
- * @description
- *
- * ngAnimateChildren allows you to specify that children of this element should animate even if any
- * of the children's parents are currently animating. By default, when an element has an active `enter`, `leave`, or `move`
- * (structural) animation, child elements that also have an active structural animation are not animated.
- *
- * Note that even if `ngAnimteChildren` is set, no child animations will run when the parent element is removed from the DOM (`leave` animation).
- *
- *
- * @param {string} ngAnimateChildren If the value is empty, `true` or `on`,
- *     then child animations are allowed. If the value is `false`, child animations are not allowed.
- *
- * @example
- * <example module="ngAnimateChildren" name="ngAnimateChildren" deps="angular-animate.js" animations="true">
-     <file name="index.html">
-       <div ng-controller="mainController as main">
-         <label>Show container? <input type="checkbox" ng-model="main.enterElement" /></label>
-         <label>Animate children? <input type="checkbox" ng-model="main.animateChildren" /></label>
-         <hr>
-         <div ng-animate-children="{{main.animateChildren}}">
-           <div ng-if="main.enterElement" class="container">
-             List of items:
-             <div ng-repeat="item in [0, 1, 2, 3]" class="item">Item {{item}}</div>
-           </div>
-         </div>
-       </div>
-     </file>
-     <file name="animations.css">
-
-      .container.ng-enter,
-      .container.ng-leave {
-        transition: all ease 1.5s;
-      }
-
-      .container.ng-enter,
-      .container.ng-leave-active {
-        opacity: 0;
-      }
-
-      .container.ng-leave,
-      .container.ng-enter-active {
-        opacity: 1;
-      }
-
-      .item {
-        background: firebrick;
-        color: #FFF;
-        margin-bottom: 10px;
-      }
-
-      .item.ng-enter,
-      .item.ng-leave {
-        transition: transform 1.5s ease;
-      }
-
-      .item.ng-enter {
-        transform: translateX(50px);
-      }
-
-      .item.ng-enter-active {
-        transform: translateX(0);
-      }
-    </file>
-    <file name="script.js">
-      angular.module('ngAnimateChildren', ['ngAnimate'])
-        .controller('mainController', function() {
-          this.animateChildren = false;
-          this.enterElement = false;
-        });
-    </file>
-  </example>
- */
 var $$AnimateChildrenDirective = ['$interpolate', function($interpolate) {
   return {
     link: function(scope, element, attrs) {
@@ -3346,220 +3268,6 @@ var $$AnimateChildrenDirective = ['$interpolate', function($interpolate) {
 
 var ANIMATE_TIMER_KEY = '$$animateCss';
 
-/**
- * @ngdoc service
- * @name $animateCss
- * @kind object
- *
- * @description
- * The `$animateCss` service is a useful utility to trigger customized CSS-based transitions/keyframes
- * from a JavaScript-based animation or directly from a directive. The purpose of `$animateCss` is NOT
- * to side-step how `$animate` and ngAnimate work, but the goal is to allow pre-existing animations or
- * directives to create more complex animations that can be purely driven using CSS code.
- *
- * Note that only browsers that support CSS transitions and/or keyframe animations are capable of
- * rendering animations triggered via `$animateCss` (bad news for IE9 and lower).
- *
- * ## Usage
- * Once again, `$animateCss` is designed to be used inside of a registered JavaScript animation that
- * is powered by ngAnimate. It is possible to use `$animateCss` directly inside of a directive, however,
- * any automatic control over cancelling animations and/or preventing animations from being run on
- * child elements will not be handled by Angular. For this to work as expected, please use `$animate` to
- * trigger the animation and then setup a JavaScript animation that injects `$animateCss` to trigger
- * the CSS animation.
- *
- * The example below shows how we can create a folding animation on an element using `ng-if`:
- *
- * ```html
- * <!-- notice the `fold-animation` CSS class -->
- * <div ng-if="onOff" class="fold-animation">
- *   This element will go BOOM
- * </div>
- * <button ng-click="onOff=true">Fold In</button>
- * ```
- *
- * Now we create the **JavaScript animation** that will trigger the CSS transition:
- *
- * ```js
- * ngModule.animation('.fold-animation', ['$animateCss', function($animateCss) {
- *   return {
- *     enter: function(element, doneFn) {
- *       var height = element[0].offsetHeight;
- *       return $animateCss(element, {
- *         from: { height:'0px' },
- *         to: { height:height + 'px' },
- *         duration: 1 // one second
- *       });
- *     }
- *   }
- * }]);
- * ```
- *
- * ## More Advanced Uses
- *
- * `$animateCss` is the underlying code that ngAnimate uses to power **CSS-based animations** behind the scenes. Therefore CSS hooks
- * like `.ng-EVENT`, `.ng-EVENT-active`, `.ng-EVENT-stagger` are all features that can be triggered using `$animateCss` via JavaScript code.
- *
- * This also means that just about any combination of adding classes, removing classes, setting styles, dynamically setting a keyframe animation,
- * applying a hardcoded duration or delay value, changing the animation easing or applying a stagger animation are all options that work with
- * `$animateCss`. The service itself is smart enough to figure out the combination of options and examine the element styling properties in order
- * to provide a working animation that will run in CSS.
- *
- * The example below showcases a more advanced version of the `.fold-animation` from the example above:
- *
- * ```js
- * ngModule.animation('.fold-animation', ['$animateCss', function($animateCss) {
- *   return {
- *     enter: function(element, doneFn) {
- *       var height = element[0].offsetHeight;
- *       return $animateCss(element, {
- *         addClass: 'red large-text pulse-twice',
- *         easing: 'ease-out',
- *         from: { height:'0px' },
- *         to: { height:height + 'px' },
- *         duration: 1 // one second
- *       });
- *     }
- *   }
- * }]);
- * ```
- *
- * Since we're adding/removing CSS classes then the CSS transition will also pick those up:
- *
- * ```css
- * /&#42; since a hardcoded duration value of 1 was provided in the JavaScript animation code,
- * the CSS classes below will be transitioned despite them being defined as regular CSS classes &#42;/
- * .red { background:red; }
- * .large-text { font-size:20px; }
- *
- * /&#42; we can also use a keyframe animation and $animateCss will make it work alongside the transition &#42;/
- * .pulse-twice {
- *   animation: 0.5s pulse linear 2;
- *   -webkit-animation: 0.5s pulse linear 2;
- * }
- *
- * @keyframes pulse {
- *   from { transform: scale(0.5); }
- *   to { transform: scale(1.5); }
- * }
- *
- * @-webkit-keyframes pulse {
- *   from { -webkit-transform: scale(0.5); }
- *   to { -webkit-transform: scale(1.5); }
- * }
- * ```
- *
- * Given this complex combination of CSS classes, styles and options, `$animateCss` will figure everything out and make the animation happen.
- *
- * ## How the Options are handled
- *
- * `$animateCss` is very versatile and intelligent when it comes to figuring out what configurations to apply to the element to ensure the animation
- * works with the options provided. Say for example we were adding a class that contained a keyframe value and we wanted to also animate some inline
- * styles using the `from` and `to` properties.
- *
- * ```js
- * var animator = $animateCss(element, {
- *   from: { background:'red' },
- *   to: { background:'blue' }
- * });
- * animator.start();
- * ```
- *
- * ```css
- * .rotating-animation {
- *   animation:0.5s rotate linear;
- *   -webkit-animation:0.5s rotate linear;
- * }
- *
- * @keyframes rotate {
- *   from { transform: rotate(0deg); }
- *   to { transform: rotate(360deg); }
- * }
- *
- * @-webkit-keyframes rotate {
- *   from { -webkit-transform: rotate(0deg); }
- *   to { -webkit-transform: rotate(360deg); }
- * }
- * ```
- *
- * The missing pieces here are that we do not have a transition set (within the CSS code nor within the `$animateCss` options) and the duration of the animation is
- * going to be detected from what the keyframe styles on the CSS class are. In this event, `$animateCss` will automatically create an inline transition
- * style matching the duration detected from the keyframe style (which is present in the CSS class that is being added) and then prepare both the transition
- * and keyframe animations to run in parallel on the element. Then when the animation is underway the provided `from` and `to` CSS styles will be applied
- * and spread across the transition and keyframe animation.
- *
- * ## What is returned
- *
- * `$animateCss` works in two stages: a preparation phase and an animation phase. Therefore when `$animateCss` is first called it will NOT actually
- * start the animation. All that is going on here is that the element is being prepared for the animation (which means that the generated CSS classes are
- * added and removed on the element). Once `$animateCss` is called it will return an object with the following properties:
- *
- * ```js
- * var animator = $animateCss(element, { ... });
- * ```
- *
- * Now what do the contents of our `animator` variable look like:
- *
- * ```js
- * {
- *   // starts the animation
- *   start: Function,
- *
- *   // ends (aborts) the animation
- *   end: Function
- * }
- * ```
- *
- * To actually start the animation we need to run `animation.start()` which will then return a promise that we can hook into to detect when the animation ends.
- * If we choose not to run the animation then we MUST run `animation.end()` to perform a cleanup on the element (since some CSS classes and styles may have been
- * applied to the element during the preparation phase). Note that all other properties such as duration, delay, transitions and keyframes are just properties
- * and that changing them will not reconfigure the parameters of the animation.
- *
- * ### runner.done() vs runner.then()
- * It is documented that `animation.start()` will return a promise object and this is true, however, there is also an additional method available on the
- * runner called `.done(callbackFn)`. The done method works the same as `.finally(callbackFn)`, however, it does **not trigger a digest to occur**.
- * Therefore, for performance reasons, it's always best to use `runner.done(callback)` instead of `runner.then()`, `runner.catch()` or `runner.finally()`
- * unless you really need a digest to kick off afterwards.
- *
- * Keep in mind that, to make this easier, ngAnimate has tweaked the JS animations API to recognize when a runner instance is returned from $animateCss
- * (so there is no need to call `runner.done(doneFn)` inside of your JavaScript animation code).
- * Check the {@link ngAnimate.$animateCss#usage animation code above} to see how this works.
- *
- * @param {DOMElement} element the element that will be animated
- * @param {object} options the animation-related options that will be applied during the animation
- *
- * * `event` - The DOM event (e.g. enter, leave, move). When used, a generated CSS class of `ng-EVENT` and `ng-EVENT-active` will be applied
- * to the element during the animation. Multiple events can be provided when spaces are used as a separator. (Note that this will not perform any DOM operation.)
- * * `structural` - Indicates that the `ng-` prefix will be added to the event class. Setting to `false` or omitting will turn `ng-EVENT` and
- * `ng-EVENT-active` in `EVENT` and `EVENT-active`. Unused if `event` is omitted.
- * * `easing` - The CSS easing value that will be applied to the transition or keyframe animation (or both).
- * * `transitionStyle` - The raw CSS transition style that will be used (e.g. `1s linear all`).
- * * `keyframeStyle` - The raw CSS keyframe animation style that will be used (e.g. `1s my_animation linear`).
- * * `from` - The starting CSS styles (a key/value object) that will be applied at the start of the animation.
- * * `to` - The ending CSS styles (a key/value object) that will be applied across the animation via a CSS transition.
- * * `addClass` - A space separated list of CSS classes that will be added to the element and spread across the animation.
- * * `removeClass` - A space separated list of CSS classes that will be removed from the element and spread across the animation.
- * * `duration` - A number value representing the total duration of the transition and/or keyframe (note that a value of 1 is 1000ms). If a value of `0`
- * is provided then the animation will be skipped entirely.
- * * `delay` - A number value representing the total delay of the transition and/or keyframe (note that a value of 1 is 1000ms). If a value of `true` is
- * used then whatever delay value is detected from the CSS classes will be mirrored on the elements styles (e.g. by setting delay true then the style value
- * of the element will be `transition-delay: DETECTED_VALUE`). Using `true` is useful when you want the CSS classes and inline styles to all share the same
- * CSS delay value.
- * * `stagger` - A numeric time value representing the delay between successively animated elements
- * ({@link ngAnimate#css-staggering-animations Click here to learn how CSS-based staggering works in ngAnimate.})
- * * `staggerIndex` - The numeric index representing the stagger item (e.g. a value of 5 is equal to the sixth item in the stagger; therefore when a
- *   `stagger` option value of `0.1` is used then there will be a stagger delay of `600ms`)
- * * `applyClassesEarly` - Whether or not the classes being added or removed will be used when detecting the animation. This is set by `$animate` when enter/leave/move animations are fired to ensure that the CSS classes are resolved in time. (Note that this will prevent any transitions from occurring on the classes being added and removed.)
- * * `cleanupStyles` - Whether or not the provided `from` and `to` styles will be removed once
- *    the animation is closed. This is useful for when the styles are used purely for the sake of
- *    the animation and do not have a lasting visual effect on the element (e.g. a collapse and open animation).
- *    By default this value is set to `false`.
- *
- * @return {object} an object with start and end methods and details about the animation.
- *
- * * `start` - The method to start the animation. This will return a `Promise` when called.
- * * `end` - This method will cancel the animation and remove all applied CSS classes and styles.
- */
 var ONE_SECOND = 1000;
 var BASE_TEN = 10;
 
@@ -6042,87 +5750,6 @@ var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
   }];
 }];
 
-/**
- * @ngdoc directive
- * @name ngAnimateSwap
- * @restrict A
- * @scope
- *
- * @description
- *
- * ngAnimateSwap is a animation-oriented directive that allows for the container to
- * be removed and entered in whenever the associated expression changes. A
- * common usecase for this directive is a rotating banner component which
- * contains one image being present at a time. When the active image changes
- * then the old image will perform a `leave` animation and the new element
- * will be inserted via an `enter` animation.
- *
- * @example
- * <example name="ngAnimateSwap-directive" module="ngAnimateSwapExample"
- *          deps="angular-animate.js"
- *          animations="true" fixBase="true">
- *   <file name="index.html">
- *     <div class="container" ng-controller="AppCtrl">
- *       <div ng-animate-swap="number" class="cell swap-animation" ng-class="colorClass(number)">
- *         {{ number }}
- *       </div>
- *     </div>
- *   </file>
- *   <file name="script.js">
- *     angular.module('ngAnimateSwapExample', ['ngAnimate'])
- *       .controller('AppCtrl', ['$scope', '$interval', function($scope, $interval) {
- *         $scope.number = 0;
- *         $interval(function() {
- *           $scope.number++;
- *         }, 1000);
- *
- *         var colors = ['red','blue','green','yellow','orange'];
- *         $scope.colorClass = function(number) {
- *           return colors[number % colors.length];
- *         };
- *       }]);
- *   </file>
- *  <file name="animations.css">
- *  .container {
- *    height:250px;
- *    width:250px;
- *    position:relative;
- *    overflow:hidden;
- *    border:2px solid black;
- *  }
- *  .container .cell {
- *    font-size:150px;
- *    text-align:center;
- *    line-height:250px;
- *    position:absolute;
- *    top:0;
- *    left:0;
- *    right:0;
- *    border-bottom:2px solid black;
- *  }
- *  .swap-animation.ng-enter, .swap-animation.ng-leave {
- *    transition:0.5s linear all;
- *  }
- *  .swap-animation.ng-enter {
- *    top:-250px;
- *  }
- *  .swap-animation.ng-enter-active {
- *    top:0px;
- *  }
- *  .swap-animation.ng-leave {
- *    top:0px;
- *  }
- *  .swap-animation.ng-leave-active {
- *    top:250px;
- *  }
- *  .red { background:red; }
- *  .green { background:green; }
- *  .blue { background:blue; }
- *  .yellow { background:yellow; }
- *  .orange { background:orange; }
- *  </file>
- * </example>
- */
 var ngAnimateSwapDirective = ['$animate', '$rootScope', function($animate, $rootScope) {
   return {
     restrict: 'A',
@@ -6151,771 +5778,7 @@ var ngAnimateSwapDirective = ['$animate', '$rootScope', function($animate, $root
   };
 }];
 
-/* global angularAnimateModule: true,
 
-   ngAnimateSwapDirective,
-   $$AnimateAsyncRunFactory,
-   $$rAFSchedulerFactory,
-   $$AnimateChildrenDirective,
-   $$AnimateQueueProvider,
-   $$AnimationProvider,
-   $AnimateCssProvider,
-   $$AnimateCssDriverProvider,
-   $$AnimateJsProvider,
-   $$AnimateJsDriverProvider,
-*/
-
-/**
- * @ngdoc module
- * @name ngAnimate
- * @description
- *
- * The `ngAnimate` module provides support for CSS-based animations (keyframes and transitions) as well as JavaScript-based animations via
- * callback hooks. Animations are not enabled by default, however, by including `ngAnimate` the animation hooks are enabled for an Angular app.
- *
- * <div doc-module-components="ngAnimate"></div>
- *
- * # Usage
- * Simply put, there are two ways to make use of animations when ngAnimate is used: by using **CSS** and **JavaScript**. The former works purely based
- * using CSS (by using matching CSS selectors/styles) and the latter triggers animations that are registered via `module.animation()`. For
- * both CSS and JS animations the sole requirement is to have a matching `CSS class` that exists both in the registered animation and within
- * the HTML element that the animation will be triggered on.
- *
- * ## Directive Support
- * The following directives are "animation aware":
- *
- * | Directive                                                                                                | Supported Animations                                                     |
- * |----------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
- * | {@link ng.directive:ngRepeat#animations ngRepeat}                                                        | enter, leave and move                                                    |
- * | {@link ngRoute.directive:ngView#animations ngView}                                                       | enter and leave                                                          |
- * | {@link ng.directive:ngInclude#animations ngInclude}                                                      | enter and leave                                                          |
- * | {@link ng.directive:ngSwitch#animations ngSwitch}                                                        | enter and leave                                                          |
- * | {@link ng.directive:ngIf#animations ngIf}                                                                | enter and leave                                                          |
- * | {@link ng.directive:ngClass#animations ngClass}                                                          | add and remove (the CSS class(es) present)                               |
- * | {@link ng.directive:ngShow#animations ngShow} & {@link ng.directive:ngHide#animations ngHide}            | add and remove (the ng-hide class value)                                 |
- * | {@link ng.directive:form#animation-hooks form} & {@link ng.directive:ngModel#animation-hooks ngModel}    | add and remove (dirty, pristine, valid, invalid & all other validations) |
- * | {@link module:ngMessages#animations ngMessages}                                                          | add and remove (ng-active & ng-inactive)                                 |
- * | {@link module:ngMessages#animations ngMessage}                                                           | enter and leave                                                          |
- *
- * (More information can be found by visiting each the documentation associated with each directive.)
- *
- * ## CSS-based Animations
- *
- * CSS-based animations with ngAnimate are unique since they require no JavaScript code at all. By using a CSS class that we reference between our HTML
- * and CSS code we can create an animation that will be picked up by Angular when an the underlying directive performs an operation.
- *
- * The example below shows how an `enter` animation can be made possible on an element using `ng-if`:
- *
- * ```html
- * <div ng-if="bool" class="fade">
- *    Fade me in out
- * </div>
- * <button ng-click="bool=true">Fade In!</button>
- * <button ng-click="bool=false">Fade Out!</button>
- * ```
- *
- * Notice the CSS class **fade**? We can now create the CSS transition code that references this class:
- *
- * ```css
- * /&#42; The starting CSS styles for the enter animation &#42;/
- * .fade.ng-enter {
- *   transition:0.5s linear all;
- *   opacity:0;
- * }
- *
- * /&#42; The finishing CSS styles for the enter animation &#42;/
- * .fade.ng-enter.ng-enter-active {
- *   opacity:1;
- * }
- * ```
- *
- * The key thing to remember here is that, depending on the animation event (which each of the directives above trigger depending on what's going on) two
- * generated CSS classes will be applied to the element; in the example above we have `.ng-enter` and `.ng-enter-active`. For CSS transitions, the transition
- * code **must** be defined within the starting CSS class (in this case `.ng-enter`). The destination class is what the transition will animate towards.
- *
- * If for example we wanted to create animations for `leave` and `move` (ngRepeat triggers move) then we can do so using the same CSS naming conventions:
- *
- * ```css
- * /&#42; now the element will fade out before it is removed from the DOM &#42;/
- * .fade.ng-leave {
- *   transition:0.5s linear all;
- *   opacity:1;
- * }
- * .fade.ng-leave.ng-leave-active {
- *   opacity:0;
- * }
- * ```
- *
- * We can also make use of **CSS Keyframes** by referencing the keyframe animation within the starting CSS class:
- *
- * ```css
- * /&#42; there is no need to define anything inside of the destination
- * CSS class since the keyframe will take charge of the animation &#42;/
- * .fade.ng-leave {
- *   animation: my_fade_animation 0.5s linear;
- *   -webkit-animation: my_fade_animation 0.5s linear;
- * }
- *
- * @keyframes my_fade_animation {
- *   from { opacity:1; }
- *   to { opacity:0; }
- * }
- *
- * @-webkit-keyframes my_fade_animation {
- *   from { opacity:1; }
- *   to { opacity:0; }
- * }
- * ```
- *
- * Feel free also mix transitions and keyframes together as well as any other CSS classes on the same element.
- *
- * ### CSS Class-based Animations
- *
- * Class-based animations (animations that are triggered via `ngClass`, `ngShow`, `ngHide` and some other directives) have a slightly different
- * naming convention. Class-based animations are basic enough that a standard transition or keyframe can be referenced on the class being added
- * and removed.
- *
- * For example if we wanted to do a CSS animation for `ngHide` then we place an animation on the `.ng-hide` CSS class:
- *
- * ```html
- * <div ng-show="bool" class="fade">
- *   Show and hide me
- * </div>
- * <button ng-click="bool=true">Toggle</button>
- *
- * <style>
- * .fade.ng-hide {
- *   transition:0.5s linear all;
- *   opacity:0;
- * }
- * </style>
- * ```
- *
- * All that is going on here with ngShow/ngHide behind the scenes is the `.ng-hide` class is added/removed (when the hidden state is valid). Since
- * ngShow and ngHide are animation aware then we can match up a transition and ngAnimate handles the rest.
- *
- * In addition the addition and removal of the CSS class, ngAnimate also provides two helper methods that we can use to further decorate the animation
- * with CSS styles.
- *
- * ```html
- * <div ng-class="{on:onOff}" class="highlight">
- *   Highlight this box
- * </div>
- * <button ng-click="onOff=!onOff">Toggle</button>
- *
- * <style>
- * .highlight {
- *   transition:0.5s linear all;
- * }
- * .highlight.on-add {
- *   background:white;
- * }
- * .highlight.on {
- *   background:yellow;
- * }
- * .highlight.on-remove {
- *   background:black;
- * }
- * </style>
- * ```
- *
- * We can also make use of CSS keyframes by placing them within the CSS classes.
- *
- *
- * ### CSS Staggering Animations
- * A Staggering animation is a collection of animations that are issued with a slight delay in between each successive operation resulting in a
- * curtain-like effect. The ngAnimate module (versions >=1.2) supports staggering animations and the stagger effect can be
- * performed by creating a **ng-EVENT-stagger** CSS class and attaching that class to the base CSS class used for
- * the animation. The style property expected within the stagger class can either be a **transition-delay** or an
- * **animation-delay** property (or both if your animation contains both transitions and keyframe animations).
- *
- * ```css
- * .my-animation.ng-enter {
- *   /&#42; standard transition code &#42;/
- *   transition: 1s linear all;
- *   opacity:0;
- * }
- * .my-animation.ng-enter-stagger {
- *   /&#42; this will have a 100ms delay between each successive leave animation &#42;/
- *   transition-delay: 0.1s;
- *
- *   /&#42; As of 1.4.4, this must always be set: it signals ngAnimate
- *     to not accidentally inherit a delay property from another CSS class &#42;/
- *   transition-duration: 0s;
- * }
- * .my-animation.ng-enter.ng-enter-active {
- *   /&#42; standard transition styles &#42;/
- *   opacity:1;
- * }
- * ```
- *
- * Staggering animations work by default in ngRepeat (so long as the CSS class is defined). Outside of ngRepeat, to use staggering animations
- * on your own, they can be triggered by firing multiple calls to the same event on $animate. However, the restrictions surrounding this
- * are that each of the elements must have the same CSS className value as well as the same parent element. A stagger operation
- * will also be reset if one or more animation frames have passed since the multiple calls to `$animate` were fired.
- *
- * The following code will issue the **ng-leave-stagger** event on the element provided:
- *
- * ```js
- * var kids = parent.children();
- *
- * $animate.leave(kids[0]); //stagger index=0
- * $animate.leave(kids[1]); //stagger index=1
- * $animate.leave(kids[2]); //stagger index=2
- * $animate.leave(kids[3]); //stagger index=3
- * $animate.leave(kids[4]); //stagger index=4
- *
- * window.requestAnimationFrame(function() {
- *   //stagger has reset itself
- *   $animate.leave(kids[5]); //stagger index=0
- *   $animate.leave(kids[6]); //stagger index=1
- *
- *   $scope.$digest();
- * });
- * ```
- *
- * Stagger animations are currently only supported within CSS-defined animations.
- *
- * ### The `ng-animate` CSS class
- *
- * When ngAnimate is animating an element it will apply the `ng-animate` CSS class to the element for the duration of the animation.
- * This is a temporary CSS class and it will be removed once the animation is over (for both JavaScript and CSS-based animations).
- *
- * Therefore, animations can be applied to an element using this temporary class directly via CSS.
- *
- * ```css
- * .zipper.ng-animate {
- *   transition:0.5s linear all;
- * }
- * .zipper.ng-enter {
- *   opacity:0;
- * }
- * .zipper.ng-enter.ng-enter-active {
- *   opacity:1;
- * }
- * .zipper.ng-leave {
- *   opacity:1;
- * }
- * .zipper.ng-leave.ng-leave-active {
- *   opacity:0;
- * }
- * ```
- *
- * (Note that the `ng-animate` CSS class is reserved and it cannot be applied on an element directly since ngAnimate will always remove
- * the CSS class once an animation has completed.)
- *
- *
- * ### The `ng-[event]-prepare` class
- *
- * This is a special class that can be used to prevent unwanted flickering / flash of content before
- * the actual animation starts. The class is added as soon as an animation is initialized, but removed
- * before the actual animation starts (after waiting for a $digest).
- * It is also only added for *structural* animations (`enter`, `move`, and `leave`).
- *
- * In practice, flickering can appear when nesting elements with structural animations such as `ngIf`
- * into elements that have class-based animations such as `ngClass`.
- *
- * ```html
- * <div ng-class="{red: myProp}">
- *   <div ng-class="{blue: myProp}">
- *     <div class="message" ng-if="myProp"></div>
- *   </div>
- * </div>
- * ```
- *
- * It is possible that during the `enter` animation, the `.message` div will be briefly visible before it starts animating.
- * In that case, you can add styles to the CSS that make sure the element stays hidden before the animation starts:
- *
- * ```css
- * .message.ng-enter-prepare {
- *   opacity: 0;
- * }
- *
- * ```
- *
- * ## JavaScript-based Animations
- *
- * ngAnimate also allows for animations to be consumed by JavaScript code. The approach is similar to CSS-based animations (where there is a shared
- * CSS class that is referenced in our HTML code) but in addition we need to register the JavaScript animation on the module. By making use of the
- * `module.animation()` module function we can register the animation.
- *
- * Let's see an example of a enter/leave animation using `ngRepeat`:
- *
- * ```html
- * <div ng-repeat="item in items" class="slide">
- *   {{ item }}
- * </div>
- * ```
- *
- * See the **slide** CSS class? Let's use that class to define an animation that we'll structure in our module code by using `module.animation`:
- *
- * ```js
- * myModule.animation('.slide', [function() {
- *   return {
- *     // make note that other events (like addClass/removeClass)
- *     // have different function input parameters
- *     enter: function(element, doneFn) {
- *       jQuery(element).fadeIn(1000, doneFn);
- *
- *       // remember to call doneFn so that angular
- *       // knows that the animation has concluded
- *     },
- *
- *     move: function(element, doneFn) {
- *       jQuery(element).fadeIn(1000, doneFn);
- *     },
- *
- *     leave: function(element, doneFn) {
- *       jQuery(element).fadeOut(1000, doneFn);
- *     }
- *   }
- * }]);
- * ```
- *
- * The nice thing about JS-based animations is that we can inject other services and make use of advanced animation libraries such as
- * greensock.js and velocity.js.
- *
- * If our animation code class-based (meaning that something like `ngClass`, `ngHide` and `ngShow` triggers it) then we can still define
- * our animations inside of the same registered animation, however, the function input arguments are a bit different:
- *
- * ```html
- * <div ng-class="color" class="colorful">
- *   this box is moody
- * </div>
- * <button ng-click="color='red'">Change to red</button>
- * <button ng-click="color='blue'">Change to blue</button>
- * <button ng-click="color='green'">Change to green</button>
- * ```
- *
- * ```js
- * myModule.animation('.colorful', [function() {
- *   return {
- *     addClass: function(element, className, doneFn) {
- *       // do some cool animation and call the doneFn
- *     },
- *     removeClass: function(element, className, doneFn) {
- *       // do some cool animation and call the doneFn
- *     },
- *     setClass: function(element, addedClass, removedClass, doneFn) {
- *       // do some cool animation and call the doneFn
- *     }
- *   }
- * }]);
- * ```
- *
- * ## CSS + JS Animations Together
- *
- * AngularJS 1.4 and higher has taken steps to make the amalgamation of CSS and JS animations more flexible. However, unlike earlier versions of Angular,
- * defining CSS and JS animations to work off of the same CSS class will not work anymore. Therefore the example below will only result in **JS animations taking
- * charge of the animation**:
- *
- * ```html
- * <div ng-if="bool" class="slide">
- *   Slide in and out
- * </div>
- * ```
- *
- * ```js
- * myModule.animation('.slide', [function() {
- *   return {
- *     enter: function(element, doneFn) {
- *       jQuery(element).slideIn(1000, doneFn);
- *     }
- *   }
- * }]);
- * ```
- *
- * ```css
- * .slide.ng-enter {
- *   transition:0.5s linear all;
- *   transform:translateY(-100px);
- * }
- * .slide.ng-enter.ng-enter-active {
- *   transform:translateY(0);
- * }
- * ```
- *
- * Does this mean that CSS and JS animations cannot be used together? Do JS-based animations always have higher priority? We can make up for the
- * lack of CSS animations by using the `$animateCss` service to trigger our own tweaked-out, CSS-based animations directly from
- * our own JS-based animation code:
- *
- * ```js
- * myModule.animation('.slide', ['$animateCss', function($animateCss) {
- *   return {
- *     enter: function(element) {
-*        // this will trigger `.slide.ng-enter` and `.slide.ng-enter-active`.
- *       return $animateCss(element, {
- *         event: 'enter',
- *         structural: true
- *       });
- *     }
- *   }
- * }]);
- * ```
- *
- * The nice thing here is that we can save bandwidth by sticking to our CSS-based animation code and we don't need to rely on a 3rd-party animation framework.
- *
- * The `$animateCss` service is very powerful since we can feed in all kinds of extra properties that will be evaluated and fed into a CSS transition or
- * keyframe animation. For example if we wanted to animate the height of an element while adding and removing classes then we can do so by providing that
- * data into `$animateCss` directly:
- *
- * ```js
- * myModule.animation('.slide', ['$animateCss', function($animateCss) {
- *   return {
- *     enter: function(element) {
- *       return $animateCss(element, {
- *         event: 'enter',
- *         structural: true,
- *         addClass: 'maroon-setting',
- *         from: { height:0 },
- *         to: { height: 200 }
- *       });
- *     }
- *   }
- * }]);
- * ```
- *
- * Now we can fill in the rest via our transition CSS code:
- *
- * ```css
- * /&#42; the transition tells ngAnimate to make the animation happen &#42;/
- * .slide.ng-enter { transition:0.5s linear all; }
- *
- * /&#42; this extra CSS class will be absorbed into the transition
- * since the $animateCss code is adding the class &#42;/
- * .maroon-setting { background:red; }
- * ```
- *
- * And `$animateCss` will figure out the rest. Just make sure to have the `done()` callback fire the `doneFn` function to signal when the animation is over.
- *
- * To learn more about what's possible be sure to visit the {@link ngAnimate.$animateCss $animateCss service}.
- *
- * ## Animation Anchoring (via `ng-animate-ref`)
- *
- * ngAnimate in AngularJS 1.4 comes packed with the ability to cross-animate elements between
- * structural areas of an application (like views) by pairing up elements using an attribute
- * called `ng-animate-ref`.
- *
- * Let's say for example we have two views that are managed by `ng-view` and we want to show
- * that there is a relationship between two components situated in within these views. By using the
- * `ng-animate-ref` attribute we can identify that the two components are paired together and we
- * can then attach an animation, which is triggered when the view changes.
- *
- * Say for example we have the following template code:
- *
- * ```html
- * <!-- index.html -->
- * <div ng-view class="view-animation">
- * </div>
- *
- * <!-- home.html -->
- * <a href="#/banner-page">
- *   <img src="./banner.jpg" class="banner" ng-animate-ref="banner">
- * </a>
- *
- * <!-- banner-page.html -->
- * <img src="./banner.jpg" class="banner" ng-animate-ref="banner">
- * ```
- *
- * Now, when the view changes (once the link is clicked), ngAnimate will examine the
- * HTML contents to see if there is a match reference between any components in the view
- * that is leaving and the view that is entering. It will scan both the view which is being
- * removed (leave) and inserted (enter) to see if there are any paired DOM elements that
- * contain a matching ref value.
- *
- * The two images match since they share the same ref value. ngAnimate will now create a
- * transport element (which is a clone of the first image element) and it will then attempt
- * to animate to the position of the second image element in the next view. For the animation to
- * work a special CSS class called `ng-anchor` will be added to the transported element.
- *
- * We can now attach a transition onto the `.banner.ng-anchor` CSS class and then
- * ngAnimate will handle the entire transition for us as well as the addition and removal of
- * any changes of CSS classes between the elements:
- *
- * ```css
- * .banner.ng-anchor {
- *   /&#42; this animation will last for 1 second since there are
- *          two phases to the animation (an `in` and an `out` phase) &#42;/
- *   transition:0.5s linear all;
- * }
- * ```
- *
- * We also **must** include animations for the views that are being entered and removed
- * (otherwise anchoring wouldn't be possible since the new view would be inserted right away).
- *
- * ```css
- * .view-animation.ng-enter, .view-animation.ng-leave {
- *   transition:0.5s linear all;
- *   position:fixed;
- *   left:0;
- *   top:0;
- *   width:100%;
- * }
- * .view-animation.ng-enter {
- *   transform:translateX(100%);
- * }
- * .view-animation.ng-leave,
- * .view-animation.ng-enter.ng-enter-active {
- *   transform:translateX(0%);
- * }
- * .view-animation.ng-leave.ng-leave-active {
- *   transform:translateX(-100%);
- * }
- * ```
- *
- * Now we can jump back to the anchor animation. When the animation happens, there are two stages that occur:
- * an `out` and an `in` stage. The `out` stage happens first and that is when the element is animated away
- * from its origin. Once that animation is over then the `in` stage occurs which animates the
- * element to its destination. The reason why there are two animations is to give enough time
- * for the enter animation on the new element to be ready.
- *
- * The example above sets up a transition for both the in and out phases, but we can also target the out or
- * in phases directly via `ng-anchor-out` and `ng-anchor-in`.
- *
- * ```css
- * .banner.ng-anchor-out {
- *   transition: 0.5s linear all;
- *
- *   /&#42; the scale will be applied during the out animation,
- *          but will be animated away when the in animation runs &#42;/
- *   transform: scale(1.2);
- * }
- *
- * .banner.ng-anchor-in {
- *   transition: 1s linear all;
- * }
- * ```
- *
- *
- *
- *
- * ### Anchoring Demo
- *
-  <example module="anchoringExample"
-           name="anchoringExample"
-           id="anchoringExample"
-           deps="angular-animate.js;angular-route.js"
-           animations="true">
-    <file name="index.html">
-      <a href="#/">Home</a>
-      <hr />
-      <div class="view-container">
-        <div ng-view class="view"></div>
-      </div>
-    </file>
-    <file name="script.js">
-      angular.module('anchoringExample', ['ngAnimate', 'ngRoute'])
-        .config(['$routeProvider', function($routeProvider) {
-          $routeProvider.when('/', {
-            templateUrl: 'home.html',
-            controller: 'HomeController as home'
-          });
-          $routeProvider.when('/profile/:id', {
-            templateUrl: 'profile.html',
-            controller: 'ProfileController as profile'
-          });
-        }])
-        .run(['$rootScope', function($rootScope) {
-          $rootScope.records = [
-            { id:1, title: "Miss Beulah Roob" },
-            { id:2, title: "Trent Morissette" },
-            { id:3, title: "Miss Ava Pouros" },
-            { id:4, title: "Rod Pouros" },
-            { id:5, title: "Abdul Rice" },
-            { id:6, title: "Laurie Rutherford Sr." },
-            { id:7, title: "Nakia McLaughlin" },
-            { id:8, title: "Jordon Blanda DVM" },
-            { id:9, title: "Rhoda Hand" },
-            { id:10, title: "Alexandrea Sauer" }
-          ];
-        }])
-        .controller('HomeController', [function() {
-          //empty
-        }])
-        .controller('ProfileController', ['$rootScope', '$routeParams', function($rootScope, $routeParams) {
-          var index = parseInt($routeParams.id, 10);
-          var record = $rootScope.records[index - 1];
-
-          this.title = record.title;
-          this.id = record.id;
-        }]);
-    </file>
-    <file name="home.html">
-      <h2>Welcome to the home page</h1>
-      <p>Please click on an element</p>
-      <a class="record"
-         ng-href="#/profile/{{ record.id }}"
-         ng-animate-ref="{{ record.id }}"
-         ng-repeat="record in records">
-        {{ record.title }}
-      </a>
-    </file>
-    <file name="profile.html">
-      <div class="profile record" ng-animate-ref="{{ profile.id }}">
-        {{ profile.title }}
-      </div>
-    </file>
-    <file name="animations.css">
-      .record {
-        display:block;
-        font-size:20px;
-      }
-      .profile {
-        background:black;
-        color:white;
-        font-size:100px;
-      }
-      .view-container {
-        position:relative;
-      }
-      .view-container > .view.ng-animate {
-        position:absolute;
-        top:0;
-        left:0;
-        width:100%;
-        min-height:500px;
-      }
-      .view.ng-enter, .view.ng-leave,
-      .record.ng-anchor {
-        transition:0.5s linear all;
-      }
-      .view.ng-enter {
-        transform:translateX(100%);
-      }
-      .view.ng-enter.ng-enter-active, .view.ng-leave {
-        transform:translateX(0%);
-      }
-      .view.ng-leave.ng-leave-active {
-        transform:translateX(-100%);
-      }
-      .record.ng-anchor-out {
-        background:red;
-      }
-    </file>
-  </example>
- *
- * ### How is the element transported?
- *
- * When an anchor animation occurs, ngAnimate will clone the starting element and position it exactly where the starting
- * element is located on screen via absolute positioning. The cloned element will be placed inside of the root element
- * of the application (where ng-app was defined) and all of the CSS classes of the starting element will be applied. The
- * element will then animate into the `out` and `in` animations and will eventually reach the coordinates and match
- * the dimensions of the destination element. During the entire animation a CSS class of `.ng-animate-shim` will be applied
- * to both the starting and destination elements in order to hide them from being visible (the CSS styling for the class
- * is: `visibility:hidden`). Once the anchor reaches its destination then it will be removed and the destination element
- * will become visible since the shim class will be removed.
- *
- * ### How is the morphing handled?
- *
- * CSS Anchoring relies on transitions and keyframes and the internal code is intelligent enough to figure out
- * what CSS classes differ between the starting element and the destination element. These different CSS classes
- * will be added/removed on the anchor element and a transition will be applied (the transition that is provided
- * in the anchor class). Long story short, ngAnimate will figure out what classes to add and remove which will
- * make the transition of the element as smooth and automatic as possible. Be sure to use simple CSS classes that
- * do not rely on DOM nesting structure so that the anchor element appears the same as the starting element (since
- * the cloned element is placed inside of root element which is likely close to the body element).
- *
- * Note that if the root element is on the `<html>` element then the cloned node will be placed inside of body.
- *
- *
- * ## Using $animate in your directive code
- *
- * So far we've explored how to feed in animations into an Angular application, but how do we trigger animations within our own directives in our application?
- * By injecting the `$animate` service into our directive code, we can trigger structural and class-based hooks which can then be consumed by animations. Let's
- * imagine we have a greeting box that shows and hides itself when the data changes
- *
- * ```html
- * <greeting-box active="onOrOff">Hi there</greeting-box>
- * ```
- *
- * ```js
- * ngModule.directive('greetingBox', ['$animate', function($animate) {
- *   return function(scope, element, attrs) {
- *     attrs.$observe('active', function(value) {
- *       value ? $animate.addClass(element, 'on') : $animate.removeClass(element, 'on');
- *     });
- *   });
- * }]);
- * ```
- *
- * Now the `on` CSS class is added and removed on the greeting box component. Now if we add a CSS class on top of the greeting box element
- * in our HTML code then we can trigger a CSS or JS animation to happen.
- *
- * ```css
- * /&#42; normally we would create a CSS class to reference on the element &#42;/
- * greeting-box.on { transition:0.5s linear all; background:green; color:white; }
- * ```
- *
- * The `$animate` service contains a variety of other methods like `enter`, `leave`, `animate` and `setClass`. To learn more about what's
- * possible be sure to visit the {@link ng.$animate $animate service API page}.
- *
- *
- * ### Preventing Collisions With Third Party Libraries
- *
- * Some third-party frameworks place animation duration defaults across many element or className
- * selectors in order to make their code small and reuseable. This can lead to issues with ngAnimate, which
- * is expecting actual animations on these elements and has to wait for their completion.
- *
- * You can prevent this unwanted behavior by using a prefix on all your animation classes:
- *
- * ```css
- * /&#42; prefixed with animate- &#42;/
- * .animate-fade-add.animate-fade-add-active {
- *   transition:1s linear all;
- *   opacity:0;
- * }
- * ```
- *
- * You then configure `$animate` to enforce this prefix:
- *
- * ```js
- * $animateProvider.classNameFilter(/animate-/);
- * ```
- *
- * This also may provide your application with a speed boost since only specific elements containing CSS class prefix
- * will be evaluated for animation when any DOM changes occur in the application.
- *
- * ## Callbacks and Promises
- *
- * When `$animate` is called it returns a promise that can be used to capture when the animation has ended. Therefore if we were to trigger
- * an animation (within our directive code) then we can continue performing directive and scope related activities after the animation has
- * ended by chaining onto the returned promise that animation method returns.
- *
- * ```js
- * // somewhere within the depths of the directive
- * $animate.enter(element, parent).then(function() {
- *   //the animation has completed
- * });
- * ```
- *
- * (Note that earlier versions of Angular prior to v1.4 required the promise code to be wrapped using `$scope.$apply(...)`. This is not the case
- * anymore.)
- *
- * In addition to the animation promise, we can also make use of animation-related callbacks within our directives and controller code by registering
- * an event listener using the `$animate` service. Let's say for example that an animation was triggered on our view
- * routing controller to hook into that:
- *
- * ```js
- * ngModule.controller('HomePageController', ['$animate', function($animate) {
- *   $animate.on('enter', ngViewElement, function(element) {
- *     // the animation for this route has completed
- *   }]);
- * }])
- * ```
- *
- * (Note that you will need to trigger a digest within the callback to get angular to notice any scope-related changes.)
- */
-
-/**
- * @ngdoc service
- * @name $animate
- * @kind object
- *
- * @description
- * The ngAnimate `$animate` service documentation is the same for the core `$animate` service.
- *
- * Click here {@link ng.$animate to learn more about animations with `$animate`}.
- */
 angular.module('ngAnimate', [])
   .directive('ngAnimateSwap', ngAnimateSwapDirective)
 
@@ -6946,59 +5809,6 @@ module.exports = 'ngAnimate';
  */
 (function(window, angular, undefined) {'use strict';
 
-/**
- * @ngdoc module
- * @name ngAria
- * @description
- *
- * The `ngAria` module provides support for common
- * [<abbr title="Accessible Rich Internet Applications">ARIA</abbr>](http://www.w3.org/TR/wai-aria/)
- * attributes that convey state or semantic information about the application for users
- * of assistive technologies, such as screen readers.
- *
- * <div doc-module-components="ngAria"></div>
- *
- * ## Usage
- *
- * For ngAria to do its magic, simply include the module `ngAria` as a dependency. The following
- * directives are supported:
- * `ngModel`, `ngChecked`, `ngRequired`, `ngValue`, `ngDisabled`, `ngShow`, `ngHide`, `ngClick`,
- * `ngDblClick`, and `ngMessages`.
- *
- * Below is a more detailed breakdown of the attributes handled by ngAria:
- *
- * | Directive                                   | Supported Attributes                                                                   |
- * |---------------------------------------------|----------------------------------------------------------------------------------------|
- * | {@link ng.directive:ngModel ngModel}        | aria-checked, aria-valuemin, aria-valuemax, aria-valuenow, aria-invalid, aria-required, input roles |
- * | {@link ng.directive:ngDisabled ngDisabled}  | aria-disabled                                                                          |
- * | {@link ng.directive:ngRequired ngRequired}  | aria-required                                                                          |
- * | {@link ng.directive:ngChecked ngChecked}    | aria-checked                                                                           |
- * | {@link ng.directive:ngValue ngValue}        | aria-checked                                                                           |
- * | {@link ng.directive:ngShow ngShow}          | aria-hidden                                                                            |
- * | {@link ng.directive:ngHide ngHide}          | aria-hidden                                                                            |
- * | {@link ng.directive:ngDblclick ngDblclick}  | tabindex                                                                               |
- * | {@link module:ngMessages ngMessages}        | aria-live                                                                              |
- * | {@link ng.directive:ngClick ngClick}        | tabindex, keypress event, button role                                                  |
- *
- * Find out more information about each directive by reading the
- * {@link guide/accessibility ngAria Developer Guide}.
- *
- * ##Example
- * Using ngDisabled with ngAria:
- * ```html
- * <md-checkbox ng-disabled="disabled">
- * ```
- * Becomes:
- * ```html
- * <md-checkbox ng-disabled="disabled" aria-disabled="true">
- * ```
- *
- * ##Disabling Attributes
- * It's possible to disable individual attributes added by ngAria with the
- * {@link ngAria.$ariaProvider#config config} method. For more details, see the
- * {@link guide/accessibility Developer Guide}.
- */
- /* global -ngAriaModule */
 var ngAriaModule = angular.module('ngAria', ['ng']).
                         provider('$aria', $AriaProvider);
 
@@ -7012,27 +5822,7 @@ var isNodeOneOf = function(elem, nodeTypeArray) {
     return true;
   }
 };
-/**
- * @ngdoc provider
- * @name $ariaProvider
- *
- * @description
- *
- * Used for configuring the ARIA attributes injected and managed by ngAria.
- *
- * ```js
- * angular.module('myApp', ['ngAria'], function config($ariaProvider) {
- *   $ariaProvider.config({
- *     ariaValue: true,
- *     tabindex: false
- *   });
- * });
- *```
- *
- * ## Dependencies
- * Requires the {@link ngAria} module to be installed.
- *
- */
+
 function $AriaProvider() {
   var config = {
     ariaHidden: true,
@@ -7046,27 +5836,7 @@ function $AriaProvider() {
     bindRoleForClick: true
   };
 
-  /**
-   * @ngdoc method
-   * @name $ariaProvider#config
-   *
-   * @param {object} config object to enable/disable specific ARIA attributes
-   *
-   *  - **ariaHidden** – `{boolean}` – Enables/disables aria-hidden tags
-   *  - **ariaChecked** – `{boolean}` – Enables/disables aria-checked tags
-   *  - **ariaDisabled** – `{boolean}` – Enables/disables aria-disabled tags
-   *  - **ariaRequired** – `{boolean}` – Enables/disables aria-required tags
-   *  - **ariaInvalid** – `{boolean}` – Enables/disables aria-invalid tags
-   *  - **ariaValue** – `{boolean}` – Enables/disables aria-valuemin, aria-valuemax and aria-valuenow tags
-   *  - **tabindex** – `{boolean}` – Enables/disables tabindex tags
-   *  - **bindKeypress** – `{boolean}` – Enables/disables keypress event binding on `div` and
-   *    `li` elements with ng-click
-   *  - **bindRoleForClick** – `{boolean}` – Adds role=button to non-interactive elements like `div`
-   *    using ng-click, making them more accessible to users of assistive technologies
-   *
-   * @description
-   * Enables/disables various ARIA attributes
-   */
+
   this.config = function(newConfig) {
     config = angular.extend(config, newConfig);
   };
@@ -7083,55 +5853,7 @@ function $AriaProvider() {
       }
     };
   }
-  /**
-   * @ngdoc service
-   * @name $aria
-   *
-   * @description
-   * @priority 200
-   *
-   * The $aria service contains helper methods for applying common
-   * [ARIA](http://www.w3.org/TR/wai-aria/) attributes to HTML directives.
-   *
-   * ngAria injects common accessibility attributes that tell assistive technologies when HTML
-   * elements are enabled, selected, hidden, and more. To see how this is performed with ngAria,
-   * let's review a code snippet from ngAria itself:
-   *
-   *```js
-   * ngAriaModule.directive('ngDisabled', ['$aria', function($aria) {
-   *   return $aria.$$watchExpr('ngDisabled', 'aria-disabled', nodeBlackList, false);
-   * }])
-   *```
-   * Shown above, the ngAria module creates a directive with the same signature as the
-   * traditional `ng-disabled` directive. But this ngAria version is dedicated to
-   * solely managing accessibility attributes on custom elements. The internal `$aria` service is
-   * used to watch the boolean attribute `ngDisabled`. If it has not been explicitly set by the
-   * developer, `aria-disabled` is injected as an attribute with its value synchronized to the
-   * value in `ngDisabled`.
-   *
-   * Because ngAria hooks into the `ng-disabled` directive, developers do not have to do
-   * anything to enable this feature. The `aria-disabled` attribute is automatically managed
-   * simply as a silent side-effect of using `ng-disabled` with the ngAria module.
-   *
-   * The full list of directives that interface with ngAria:
-   * * **ngModel**
-   * * **ngChecked**
-   * * **ngRequired**
-   * * **ngDisabled**
-   * * **ngValue**
-   * * **ngShow**
-   * * **ngHide**
-   * * **ngClick**
-   * * **ngDblclick**
-   * * **ngMessages**
-   *
-   * Read the {@link guide/accessibility ngAria Developer Guide} for a thorough explanation of each
-   * directive.
-   *
-   *
-   * ## Dependencies
-   * Requires the {@link ngAria} module to be installed.
-   */
+
   this.$get = function() {
     return {
       config: function(key) {
@@ -7446,91 +6168,7 @@ angular.module('material.core')
   .directive('mdAutoFocus', MdAutofocusDirective)
   .directive('mdSidenavFocus', MdAutofocusDirective);
 
-/**
- * @ngdoc directive
- * @name mdAutofocus
- * @module material.core.util
- *
- * @description
- *
- * `[md-autofocus]` provides an optional way to identify the focused element when a `$mdDialog`,
- * `$mdBottomSheet`, or `$mdSidenav` opens or upon page load for input-like elements.
- *
- * When one of these opens, it will find the first nested element with the `[md-autofocus]`
- * attribute directive and optional expression. An expression may be specified as the directive
- * value to enable conditional activation of the autofocus.
- *
- * @usage
- *
- * ### Dialog
- * <hljs lang="html">
- * <md-dialog>
- *   <form>
- *     <md-input-container>
- *       <label for="testInput">Label</label>
- *       <input id="testInput" type="text" md-autofocus>
- *     </md-input-container>
- *   </form>
- * </md-dialog>
- * </hljs>
- *
- * ### Bottomsheet
- * <hljs lang="html">
- * <md-bottom-sheet class="md-list md-has-header">
- *  <md-subheader>Comment Actions</md-subheader>
- *  <md-list>
- *    <md-list-item ng-repeat="item in items">
- *
- *      <md-button md-autofocus="$index == 2">
- *        <md-icon md-svg-src="{{item.icon}}"></md-icon>
- *        <span class="md-inline-list-icon-label">{{ item.name }}</span>
- *      </md-button>
- *
- *    </md-list-item>
- *  </md-list>
- * </md-bottom-sheet>
- * </hljs>
- *
- * ### Autocomplete
- * <hljs lang="html">
- *   <md-autocomplete
- *       md-autofocus
- *       md-selected-item="selectedItem"
- *       md-search-text="searchText"
- *       md-items="item in getMatches(searchText)"
- *       md-item-text="item.display">
- *     <span md-highlight-text="searchText">{{item.display}}</span>
- *   </md-autocomplete>
- * </hljs>
- *
- * ### Sidenav
- * <hljs lang="html">
- * <div layout="row" ng-controller="MyController">
- *   <md-sidenav md-component-id="left" class="md-sidenav-left">
- *     Left Nav!
- *   </md-sidenav>
- *
- *   <md-content>
- *     Center Content
- *     <md-button ng-click="openLeftMenu()">
- *       Open Left Menu
- *     </md-button>
- *   </md-content>
- *
- *   <md-sidenav md-component-id="right"
- *     md-is-locked-open="$mdMedia('min-width: 333px')"
- *     class="md-sidenav-right">
- *     <form>
- *       <md-input-container>
- *         <label for="testInput">Test input</label>
- *         <input id="testInput" type="text"
- *                ng-model="data" md-autofocus>
- *       </md-input-container>
- *     </form>
- *   </md-sidenav>
- * </div>
- * </hljs>
- **/
+
 function MdAutofocusDirective() {
   return {
     restrict: 'A',
@@ -38340,835 +36978,6 @@ function $TemplateCacheProvider() {
   }];
 }
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *     Any commits to this file should be reviewed with security in mind.  *
- *   Changes to this file can potentially create security vulnerabilities. *
- *          An approval from 2 Core members with history of modifying      *
- *                         this file is required.                          *
- *                                                                         *
- *  Does the change somehow allow for arbitrary javascript to be executed? *
- *    Or allows for someone to change the prototype of built-in objects?   *
- *     Or gives undesired access to variables likes document or window?    *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-/* ! VARIABLE/FUNCTION NAMING CONVENTIONS THAT APPLY TO THIS FILE!
- *
- * DOM-related variables:
- *
- * - "node" - DOM Node
- * - "element" - DOM Element or Node
- * - "$node" or "$element" - jqLite-wrapped node or element
- *
- *
- * Compiler related stuff:
- *
- * - "linkFn" - linking fn of a single directive
- * - "nodeLinkFn" - function that aggregates all linking fns for a particular node
- * - "childLinkFn" -  function that aggregates all linking fns for child nodes of a particular node
- * - "compositeLinkFn" - function that aggregates all linking fns for a compilation root (nodeList)
- */
-
-
-/**
- * @ngdoc service
- * @name $compile
- * @kind function
- *
- * @description
- * Compiles an HTML string or DOM into a template and produces a template function, which
- * can then be used to link {@link ng.$rootScope.Scope `scope`} and the template together.
- *
- * The compilation is a process of walking the DOM tree and matching DOM elements to
- * {@link ng.$compileProvider#directive directives}.
- *
- * <div class="alert alert-warning">
- * **Note:** This document is an in-depth reference of all directive options.
- * For a gentle introduction to directives with examples of common use cases,
- * see the {@link guide/directive directive guide}.
- * </div>
- *
- * ## Comprehensive Directive API
- *
- * There are many different options for a directive.
- *
- * The difference resides in the return value of the factory function.
- * You can either return a "Directive Definition Object" (see below) that defines the directive properties,
- * or just the `postLink` function (all other properties will have the default values).
- *
- * <div class="alert alert-success">
- * **Best Practice:** It's recommended to use the "directive definition object" form.
- * </div>
- *
- * Here's an example directive declared with a Directive Definition Object:
- *
- * ```js
- *   var myModule = angular.module(...);
- *
- *   myModule.directive('directiveName', function factory(injectables) {
- *     var directiveDefinitionObject = {
- *       priority: 0,
- *       template: '<div></div>', // or // function(tElement, tAttrs) { ... },
- *       // or
- *       // templateUrl: 'directive.html', // or // function(tElement, tAttrs) { ... },
- *       transclude: false,
- *       restrict: 'A',
- *       templateNamespace: 'html',
- *       scope: false,
- *       controller: function($scope, $element, $attrs, $transclude, otherInjectables) { ... },
- *       controllerAs: 'stringIdentifier',
- *       bindToController: false,
- *       require: 'siblingDirectiveName', // or // ['^parentDirectiveName', '?optionalDirectiveName', '?^optionalParent'],
- *       compile: function compile(tElement, tAttrs, transclude) {
- *         return {
- *           pre: function preLink(scope, iElement, iAttrs, controller) { ... },
- *           post: function postLink(scope, iElement, iAttrs, controller) { ... }
- *         }
- *         // or
- *         // return function postLink( ... ) { ... }
- *       },
- *       // or
- *       // link: {
- *       //  pre: function preLink(scope, iElement, iAttrs, controller) { ... },
- *       //  post: function postLink(scope, iElement, iAttrs, controller) { ... }
- *       // }
- *       // or
- *       // link: function postLink( ... ) { ... }
- *     };
- *     return directiveDefinitionObject;
- *   });
- * ```
- *
- * <div class="alert alert-warning">
- * **Note:** Any unspecified options will use the default value. You can see the default values below.
- * </div>
- *
- * Therefore the above can be simplified as:
- *
- * ```js
- *   var myModule = angular.module(...);
- *
- *   myModule.directive('directiveName', function factory(injectables) {
- *     var directiveDefinitionObject = {
- *       link: function postLink(scope, iElement, iAttrs) { ... }
- *     };
- *     return directiveDefinitionObject;
- *     // or
- *     // return function postLink(scope, iElement, iAttrs) { ... }
- *   });
- * ```
- *
- *
- *
- * ### Directive Definition Object
- *
- * The directive definition object provides instructions to the {@link ng.$compile
- * compiler}. The attributes are:
- *
- * #### `multiElement`
- * When this property is set to true, the HTML compiler will collect DOM nodes between
- * nodes with the attributes `directive-name-start` and `directive-name-end`, and group them
- * together as the directive elements. It is recommended that this feature be used on directives
- * which are not strictly behavioral (such as {@link ngClick}), and which
- * do not manipulate or replace child nodes (such as {@link ngInclude}).
- *
- * #### `priority`
- * When there are multiple directives defined on a single DOM element, sometimes it
- * is necessary to specify the order in which the directives are applied. The `priority` is used
- * to sort the directives before their `compile` functions get called. Priority is defined as a
- * number. Directives with greater numerical `priority` are compiled first. Pre-link functions
- * are also run in priority order, but post-link functions are run in reverse order. The order
- * of directives with the same priority is undefined. The default priority is `0`.
- *
- * #### `terminal`
- * If set to true then the current `priority` will be the last set of directives
- * which will execute (any directives at the current priority will still execute
- * as the order of execution on same `priority` is undefined). Note that expressions
- * and other directives used in the directive's template will also be excluded from execution.
- *
- * #### `scope`
- * The scope property can be `true`, an object or a falsy value:
- *
- * * **falsy:** No scope will be created for the directive. The directive will use its parent's scope.
- *
- * * **`true`:** A new child scope that prototypically inherits from its parent will be created for
- * the directive's element. If multiple directives on the same element request a new scope,
- * only one new scope is created. The new scope rule does not apply for the root of the template
- * since the root of the template always gets a new scope.
- *
- * * **`{...}` (an object hash):** A new "isolate" scope is created for the directive's element. The
- * 'isolate' scope differs from normal scope in that it does not prototypically inherit from its parent
- * scope. This is useful when creating reusable components, which should not accidentally read or modify
- * data in the parent scope.
- *
- * The 'isolate' scope object hash defines a set of local scope properties derived from attributes on the
- * directive's element. These local properties are useful for aliasing values for templates. The keys in
- * the object hash map to the name of the property on the isolate scope; the values define how the property
- * is bound to the parent scope, via matching attributes on the directive's element:
- *
- * * `@` or `@attr` - bind a local scope property to the value of DOM attribute. The result is
- *   always a string since DOM attributes are strings. If no `attr` name is specified then the
- *   attribute name is assumed to be the same as the local name. Given `<my-component
- *   my-attr="hello {{name}}">` and the isolate scope definition `scope: { localName:'@myAttr' }`,
- *   the directive's scope property `localName` will reflect the interpolated value of `hello
- *   {{name}}`. As the `name` attribute changes so will the `localName` property on the directive's
- *   scope. The `name` is read from the parent scope (not the directive's scope).
- *
- * * `=` or `=attr` - set up a bidirectional binding between a local scope property and an expression
- *   passed via the attribute `attr`. The expression is evaluated in the context of the parent scope.
- *   If no `attr` name is specified then the attribute name is assumed to be the same as the local
- *   name. Given `<my-component my-attr="parentModel">` and the isolate scope definition `scope: {
- *   localModel: '=myAttr' }`, the property `localModel` on the directive's scope will reflect the
- *   value of `parentModel` on the parent scope. Changes to `parentModel` will be reflected in
- *   `localModel` and vice versa. Optional attributes should be marked as such with a question mark:
- *   `=?` or `=?attr`. If the binding expression is non-assignable, or if the attribute isn't
- *   optional and doesn't exist, an exception ({@link error/$compile/nonassign `$compile:nonassign`})
- *   will be thrown upon discovering changes to the local value, since it will be impossible to sync
- *   them back to the parent scope. By default, the {@link ng.$rootScope.Scope#$watch `$watch`}
- *   method is used for tracking changes, and the equality check is based on object identity.
- *   However, if an object literal or an array literal is passed as the binding expression, the
- *   equality check is done by value (using the {@link angular.equals} function). It's also possible
- *   to watch the evaluated value shallowly with {@link ng.$rootScope.Scope#$watchCollection
- *   `$watchCollection`}: use `=*` or `=*attr` (`=*?` or `=*?attr` if the attribute is optional).
- *
-  * * `<` or `<attr` - set up a one-way (one-directional) binding between a local scope property and an
- *   expression passed via the attribute `attr`. The expression is evaluated in the context of the
- *   parent scope. If no `attr` name is specified then the attribute name is assumed to be the same as the
- *   local name. You can also make the binding optional by adding `?`: `<?` or `<?attr`.
- *
- *   For example, given `<my-component my-attr="parentModel">` and directive definition of
- *   `scope: { localModel:'<myAttr' }`, then the isolated scope property `localModel` will reflect the
- *   value of `parentModel` on the parent scope. Any changes to `parentModel` will be reflected
- *   in `localModel`, but changes in `localModel` will not reflect in `parentModel`. There are however
- *   two caveats:
- *     1. one-way binding does not copy the value from the parent to the isolate scope, it simply
- *     sets the same value. That means if your bound value is an object, changes to its properties
- *     in the isolated scope will be reflected in the parent scope (because both reference the same object).
- *     2. one-way binding watches changes to the **identity** of the parent value. That means the
- *     {@link ng.$rootScope.Scope#$watch `$watch`} on the parent value only fires if the reference
- *     to the value has changed. In most cases, this should not be of concern, but can be important
- *     to know if you one-way bind to an object, and then replace that object in the isolated scope.
- *     If you now change a property of the object in your parent scope, the change will not be
- *     propagated to the isolated scope, because the identity of the object on the parent scope
- *     has not changed. Instead you must assign a new object.
- *
- *   One-way binding is useful if you do not plan to propagate changes to your isolated scope bindings
- *   back to the parent. However, it does not make this completely impossible.
- *
- * * `&` or `&attr` - provides a way to execute an expression in the context of the parent scope. If
- *   no `attr` name is specified then the attribute name is assumed to be the same as the local name.
- *   Given `<my-component my-attr="count = count + value">` and the isolate scope definition `scope: {
- *   localFn:'&myAttr' }`, the isolate scope property `localFn` will point to a function wrapper for
- *   the `count = count + value` expression. Often it's desirable to pass data from the isolated scope
- *   via an expression to the parent scope. This can be done by passing a map of local variable names
- *   and values into the expression wrapper fn. For example, if the expression is `increment(amount)`
- *   then we can specify the amount value by calling the `localFn` as `localFn({amount: 22})`.
- *
- * In general it's possible to apply more than one directive to one element, but there might be limitations
- * depending on the type of scope required by the directives. The following points will help explain these limitations.
- * For simplicity only two directives are taken into account, but it is also applicable for several directives:
- *
- * * **no scope** + **no scope** => Two directives which don't require their own scope will use their parent's scope
- * * **child scope** + **no scope** =>  Both directives will share one single child scope
- * * **child scope** + **child scope** =>  Both directives will share one single child scope
- * * **isolated scope** + **no scope** =>  The isolated directive will use it's own created isolated scope. The other directive will use
- * its parent's scope
- * * **isolated scope** + **child scope** =>  **Won't work!** Only one scope can be related to one element. Therefore these directives cannot
- * be applied to the same element.
- * * **isolated scope** + **isolated scope**  =>  **Won't work!** Only one scope can be related to one element. Therefore these directives
- * cannot be applied to the same element.
- *
- *
- * #### `bindToController`
- * This property is used to bind scope properties directly to the controller. It can be either
- * `true` or an object hash with the same format as the `scope` property. Additionally, a controller
- * alias must be set, either by using `controllerAs: 'myAlias'` or by specifying the alias in the controller
- * definition: `controller: 'myCtrl as myAlias'`.
- *
- * When an isolate scope is used for a directive (see above), `bindToController: true` will
- * allow a component to have its properties bound to the controller, rather than to scope.
- *
- * After the controller is instantiated, the initial values of the isolate scope bindings will be bound to the controller
- * properties. You can access these bindings once they have been initialized by providing a controller method called
- * `$onInit`, which is called after all the controllers on an element have been constructed and had their bindings
- * initialized.
- *
- * <div class="alert alert-warning">
- * **Deprecation warning:** although bindings for non-ES6 class controllers are currently
- * bound to `this` before the controller constructor is called, this use is now deprecated. Please place initialization
- * code that relies upon bindings inside a `$onInit` method on the controller, instead.
- * </div>
- *
- * It is also possible to set `bindToController` to an object hash with the same format as the `scope` property.
- * This will set up the scope bindings to the controller directly. Note that `scope` can still be used
- * to define which kind of scope is created. By default, no scope is created. Use `scope: {}` to create an isolate
- * scope (useful for component directives).
- *
- * If both `bindToController` and `scope` are defined and have object hashes, `bindToController` overrides `scope`.
- *
- *
- * #### `controller`
- * Controller constructor function. The controller is instantiated before the
- * pre-linking phase and can be accessed by other directives (see
- * `require` attribute). This allows the directives to communicate with each other and augment
- * each other's behavior. The controller is injectable (and supports bracket notation) with the following locals:
- *
- * * `$scope` - Current scope associated with the element
- * * `$element` - Current element
- * * `$attrs` - Current attributes object for the element
- * * `$transclude` - A transclude linking function pre-bound to the correct transclusion scope:
- *   `function([scope], cloneLinkingFn, futureParentElement, slotName)`:
- *    * `scope`: (optional) override the scope.
- *    * `cloneLinkingFn`: (optional) argument to create clones of the original transcluded content.
- *    * `futureParentElement` (optional):
- *        * defines the parent to which the `cloneLinkingFn` will add the cloned elements.
- *        * default: `$element.parent()` resp. `$element` for `transclude:'element'` resp. `transclude:true`.
- *        * only needed for transcludes that are allowed to contain non html elements (e.g. SVG elements)
- *          and when the `cloneLinkinFn` is passed,
- *          as those elements need to created and cloned in a special way when they are defined outside their
- *          usual containers (e.g. like `<svg>`).
- *        * See also the `directive.templateNamespace` property.
- *    * `slotName`: (optional) the name of the slot to transclude. If falsy (e.g. `null`, `undefined` or `''`)
- *      then the default translusion is provided.
- *    The `$transclude` function also has a method on it, `$transclude.isSlotFilled(slotName)`, which returns
- *    `true` if the specified slot contains content (i.e. one or more DOM nodes).
- *
- * The controller can provide the following methods that act as life-cycle hooks:
- * * `$onInit` - Called on each controller after all the controllers on an element have been constructed and
- *   had their bindings initialized (and before the pre &amp; post linking functions for the directives on
- *   this element). This is a good place to put initialization code for your controller.
- *
- * #### `require`
- * Require another directive and inject its controller as the fourth argument to the linking function. The
- * `require` property can be a string, an array or an object:
- * * a **string** containing the name of the directive to pass to the linking function
- * * an **array** containing the names of directives to pass to the linking function. The argument passed to the
- * linking function will be an array of controllers in the same order as the names in the `require` property
- * * an **object** whose property values are the names of the directives to pass to the linking function. The argument
- * passed to the linking function will also be an object with matching keys, whose values will hold the corresponding
- * controllers.
- *
- * If the `require` property is an object and `bindToController` is truthy, then the required controllers are
- * bound to the controller using the keys of the `require` property. This binding occurs after all the controllers
- * have been constructed but before `$onInit` is called.
- * See the {@link $compileProvider#component} helper for an example of how this can be used.
- *
- * If no such required directive(s) can be found, or if the directive does not have a controller, then an error is
- * raised (unless no link function is specified and the required controllers are not being bound to the directive
- * controller, in which case error checking is skipped). The name can be prefixed with:
- *
- * * (no prefix) - Locate the required controller on the current element. Throw an error if not found.
- * * `?` - Attempt to locate the required controller or pass `null` to the `link` fn if not found.
- * * `^` - Locate the required controller by searching the element and its parents. Throw an error if not found.
- * * `^^` - Locate the required controller by searching the element's parents. Throw an error if not found.
- * * `?^` - Attempt to locate the required controller by searching the element and its parents or pass
- *   `null` to the `link` fn if not found.
- * * `?^^` - Attempt to locate the required controller by searching the element's parents, or pass
- *   `null` to the `link` fn if not found.
- *
- *
- * #### `controllerAs`
- * Identifier name for a reference to the controller in the directive's scope.
- * This allows the controller to be referenced from the directive template. This is especially
- * useful when a directive is used as component, i.e. with an `isolate` scope. It's also possible
- * to use it in a directive without an `isolate` / `new` scope, but you need to be aware that the
- * `controllerAs` reference might overwrite a property that already exists on the parent scope.
- *
- *
- * #### `restrict`
- * String of subset of `EACM` which restricts the directive to a specific directive
- * declaration style. If omitted, the defaults (elements and attributes) are used.
- *
- * * `E` - Element name (default): `<my-directive></my-directive>`
- * * `A` - Attribute (default): `<div my-directive="exp"></div>`
- * * `C` - Class: `<div class="my-directive: exp;"></div>`
- * * `M` - Comment: `<!-- directive: my-directive exp -->`
- *
- *
- * #### `templateNamespace`
- * String representing the document type used by the markup in the template.
- * AngularJS needs this information as those elements need to be created and cloned
- * in a special way when they are defined outside their usual containers like `<svg>` and `<math>`.
- *
- * * `html` - All root nodes in the template are HTML. Root nodes may also be
- *   top-level elements such as `<svg>` or `<math>`.
- * * `svg` - The root nodes in the template are SVG elements (excluding `<math>`).
- * * `math` - The root nodes in the template are MathML elements (excluding `<svg>`).
- *
- * If no `templateNamespace` is specified, then the namespace is considered to be `html`.
- *
- * #### `template`
- * HTML markup that may:
- * * Replace the contents of the directive's element (default).
- * * Replace the directive's element itself (if `replace` is true - DEPRECATED).
- * * Wrap the contents of the directive's element (if `transclude` is true).
- *
- * Value may be:
- *
- * * A string. For example `<div red-on-hover>{{delete_str}}</div>`.
- * * A function which takes two arguments `tElement` and `tAttrs` (described in the `compile`
- *   function api below) and returns a string value.
- *
- *
- * #### `templateUrl`
- * This is similar to `template` but the template is loaded from the specified URL, asynchronously.
- *
- * Because template loading is asynchronous the compiler will suspend compilation of directives on that element
- * for later when the template has been resolved.  In the meantime it will continue to compile and link
- * sibling and parent elements as though this element had not contained any directives.
- *
- * The compiler does not suspend the entire compilation to wait for templates to be loaded because this
- * would result in the whole app "stalling" until all templates are loaded asynchronously - even in the
- * case when only one deeply nested directive has `templateUrl`.
- *
- * Template loading is asynchronous even if the template has been preloaded into the {@link $templateCache}
- *
- * You can specify `templateUrl` as a string representing the URL or as a function which takes two
- * arguments `tElement` and `tAttrs` (described in the `compile` function api below) and returns
- * a string value representing the url.  In either case, the template URL is passed through {@link
- * $sce#getTrustedResourceUrl $sce.getTrustedResourceUrl}.
- *
- *
- * #### `replace` ([*DEPRECATED*!], will be removed in next major release - i.e. v2.0)
- * specify what the template should replace. Defaults to `false`.
- *
- * * `true` - the template will replace the directive's element.
- * * `false` - the template will replace the contents of the directive's element.
- *
- * The replacement process migrates all of the attributes / classes from the old element to the new
- * one. See the {@link guide/directive#template-expanding-directive
- * Directives Guide} for an example.
- *
- * There are very few scenarios where element replacement is required for the application function,
- * the main one being reusable custom components that are used within SVG contexts
- * (because SVG doesn't work with custom elements in the DOM tree).
- *
- * #### `transclude`
- * Extract the contents of the element where the directive appears and make it available to the directive.
- * The contents are compiled and provided to the directive as a **transclusion function**. See the
- * {@link $compile#transclusion Transclusion} section below.
- *
- *
- * #### `compile`
- *
- * ```js
- *   function compile(tElement, tAttrs, transclude) { ... }
- * ```
- *
- * The compile function deals with transforming the template DOM. Since most directives do not do
- * template transformation, it is not used often. The compile function takes the following arguments:
- *
- *   * `tElement` - template element - The element where the directive has been declared. It is
- *     safe to do template transformation on the element and child elements only.
- *
- *   * `tAttrs` - template attributes - Normalized list of attributes declared on this element shared
- *     between all directive compile functions.
- *
- *   * `transclude` -  [*DEPRECATED*!] A transclude linking function: `function(scope, cloneLinkingFn)`
- *
- * <div class="alert alert-warning">
- * **Note:** The template instance and the link instance may be different objects if the template has
- * been cloned. For this reason it is **not** safe to do anything other than DOM transformations that
- * apply to all cloned DOM nodes within the compile function. Specifically, DOM listener registration
- * should be done in a linking function rather than in a compile function.
- * </div>
-
- * <div class="alert alert-warning">
- * **Note:** The compile function cannot handle directives that recursively use themselves in their
- * own templates or compile functions. Compiling these directives results in an infinite loop and
- * stack overflow errors.
- *
- * This can be avoided by manually using $compile in the postLink function to imperatively compile
- * a directive's template instead of relying on automatic template compilation via `template` or
- * `templateUrl` declaration or manual compilation inside the compile function.
- * </div>
- *
- * <div class="alert alert-danger">
- * **Note:** The `transclude` function that is passed to the compile function is deprecated, as it
- *   e.g. does not know about the right outer scope. Please use the transclude function that is passed
- *   to the link function instead.
- * </div>
-
- * A compile function can have a return value which can be either a function or an object.
- *
- * * returning a (post-link) function - is equivalent to registering the linking function via the
- *   `link` property of the config object when the compile function is empty.
- *
- * * returning an object with function(s) registered via `pre` and `post` properties - allows you to
- *   control when a linking function should be called during the linking phase. See info about
- *   pre-linking and post-linking functions below.
- *
- *
- * #### `link`
- * This property is used only if the `compile` property is not defined.
- *
- * ```js
- *   function link(scope, iElement, iAttrs, controller, transcludeFn) { ... }
- * ```
- *
- * The link function is responsible for registering DOM listeners as well as updating the DOM. It is
- * executed after the template has been cloned. This is where most of the directive logic will be
- * put.
- *
- *   * `scope` - {@link ng.$rootScope.Scope Scope} - The scope to be used by the
- *     directive for registering {@link ng.$rootScope.Scope#$watch watches}.
- *
- *   * `iElement` - instance element - The element where the directive is to be used. It is safe to
- *     manipulate the children of the element only in `postLink` function since the children have
- *     already been linked.
- *
- *   * `iAttrs` - instance attributes - Normalized list of attributes declared on this element shared
- *     between all directive linking functions.
- *
- *   * `controller` - the directive's required controller instance(s) - Instances are shared
- *     among all directives, which allows the directives to use the controllers as a communication
- *     channel. The exact value depends on the directive's `require` property:
- *       * no controller(s) required: the directive's own controller, or `undefined` if it doesn't have one
- *       * `string`: the controller instance
- *       * `array`: array of controller instances
- *
- *     If a required controller cannot be found, and it is optional, the instance is `null`,
- *     otherwise the {@link error:$compile:ctreq Missing Required Controller} error is thrown.
- *
- *     Note that you can also require the directive's own controller - it will be made available like
- *     any other controller.
- *
- *   * `transcludeFn` - A transclude linking function pre-bound to the correct transclusion scope.
- *     This is the same as the `$transclude`
- *     parameter of directive controllers, see there for details.
- *     `function([scope], cloneLinkingFn, futureParentElement)`.
- *
- * #### Pre-linking function
- *
- * Executed before the child elements are linked. Not safe to do DOM transformation since the
- * compiler linking function will fail to locate the correct elements for linking.
- *
- * #### Post-linking function
- *
- * Executed after the child elements are linked.
- *
- * Note that child elements that contain `templateUrl` directives will not have been compiled
- * and linked since they are waiting for their template to load asynchronously and their own
- * compilation and linking has been suspended until that occurs.
- *
- * It is safe to do DOM transformation in the post-linking function on elements that are not waiting
- * for their async templates to be resolved.
- *
- *
- * ### Transclusion
- *
- * Transclusion is the process of extracting a collection of DOM elements from one part of the DOM and
- * copying them to another part of the DOM, while maintaining their connection to the original AngularJS
- * scope from where they were taken.
- *
- * Transclusion is used (often with {@link ngTransclude}) to insert the
- * original contents of a directive's element into a specified place in the template of the directive.
- * The benefit of transclusion, over simply moving the DOM elements manually, is that the transcluded
- * content has access to the properties on the scope from which it was taken, even if the directive
- * has isolated scope.
- * See the {@link guide/directive#creating-a-directive-that-wraps-other-elements Directives Guide}.
- *
- * This makes it possible for the widget to have private state for its template, while the transcluded
- * content has access to its originating scope.
- *
- * <div class="alert alert-warning">
- * **Note:** When testing an element transclude directive you must not place the directive at the root of the
- * DOM fragment that is being compiled. See {@link guide/unit-testing#testing-transclusion-directives
- * Testing Transclusion Directives}.
- * </div>
- *
- * There are three kinds of transclusion depending upon whether you want to transclude just the contents of the
- * directive's element, the entire element or multiple parts of the element contents:
- *
- * * `true` - transclude the content (i.e. the child nodes) of the directive's element.
- * * `'element'` - transclude the whole of the directive's element including any directives on this
- *   element that defined at a lower priority than this directive. When used, the `template`
- *   property is ignored.
- * * **`{...}` (an object hash):** - map elements of the content onto transclusion "slots" in the template.
- *
- * **Mult-slot transclusion** is declared by providing an object for the `transclude` property.
- *
- * This object is a map where the keys are the name of the slot to fill and the value is an element selector
- * used to match the HTML to the slot. The element selector should be in normalized form (e.g. `myElement`)
- * and will match the standard element variants (e.g. `my-element`, `my:element`, `data-my-element`, etc).
- *
- * For further information check out the guide on {@link guide/directive#matching-directives Matching Directives}
- *
- * If the element selector is prefixed with a `?` then that slot is optional.
- *
- * For example, the transclude object `{ slotA: '?myCustomElement' }` maps `<my-custom-element>` elements to
- * the `slotA` slot, which can be accessed via the `$transclude` function or via the {@link ngTransclude} directive.
- *
- * Slots that are not marked as optional (`?`) will trigger a compile time error if there are no matching elements
- * in the transclude content. If you wish to know if an optional slot was filled with content, then you can call
- * `$transclude.isSlotFilled(slotName)` on the transclude function passed to the directive's link function and
- * injectable into the directive's controller.
- *
- *
- * #### Transclusion Functions
- *
- * When a directive requests transclusion, the compiler extracts its contents and provides a **transclusion
- * function** to the directive's `link` function and `controller`. This transclusion function is a special
- * **linking function** that will return the compiled contents linked to a new transclusion scope.
- *
- * <div class="alert alert-info">
- * If you are just using {@link ngTransclude} then you don't need to worry about this function, since
- * ngTransclude will deal with it for us.
- * </div>
- *
- * If you want to manually control the insertion and removal of the transcluded content in your directive
- * then you must use this transclude function. When you call a transclude function it returns a a jqLite/JQuery
- * object that contains the compiled DOM, which is linked to the correct transclusion scope.
- *
- * When you call a transclusion function you can pass in a **clone attach function**. This function accepts
- * two parameters, `function(clone, scope) { ... }`, where the `clone` is a fresh compiled copy of your transcluded
- * content and the `scope` is the newly created transclusion scope, to which the clone is bound.
- *
- * <div class="alert alert-info">
- * **Best Practice**: Always provide a `cloneFn` (clone attach function) when you call a transclude function
- * since you then get a fresh clone of the original DOM and also have access to the new transclusion scope.
- * </div>
- *
- * It is normal practice to attach your transcluded content (`clone`) to the DOM inside your **clone
- * attach function**:
- *
- * ```js
- * var transcludedContent, transclusionScope;
- *
- * $transclude(function(clone, scope) {
- *   element.append(clone);
- *   transcludedContent = clone;
- *   transclusionScope = scope;
- * });
- * ```
- *
- * Later, if you want to remove the transcluded content from your DOM then you should also destroy the
- * associated transclusion scope:
- *
- * ```js
- * transcludedContent.remove();
- * transclusionScope.$destroy();
- * ```
- *
- * <div class="alert alert-info">
- * **Best Practice**: if you intend to add and remove transcluded content manually in your directive
- * (by calling the transclude function to get the DOM and calling `element.remove()` to remove it),
- * then you are also responsible for calling `$destroy` on the transclusion scope.
- * </div>
- *
- * The built-in DOM manipulation directives, such as {@link ngIf}, {@link ngSwitch} and {@link ngRepeat}
- * automatically destroy their transcluded clones as necessary so you do not need to worry about this if
- * you are simply using {@link ngTransclude} to inject the transclusion into your directive.
- *
- *
- * #### Transclusion Scopes
- *
- * When you call a transclude function it returns a DOM fragment that is pre-bound to a **transclusion
- * scope**. This scope is special, in that it is a child of the directive's scope (and so gets destroyed
- * when the directive's scope gets destroyed) but it inherits the properties of the scope from which it
- * was taken.
- *
- * For example consider a directive that uses transclusion and isolated scope. The DOM hierarchy might look
- * like this:
- *
- * ```html
- * <div ng-app>
- *   <div isolate>
- *     <div transclusion>
- *     </div>
- *   </div>
- * </div>
- * ```
- *
- * The `$parent` scope hierarchy will look like this:
- *
-   ```
-   - $rootScope
-     - isolate
-       - transclusion
-   ```
- *
- * but the scopes will inherit prototypically from different scopes to their `$parent`.
- *
-   ```
-   - $rootScope
-     - transclusion
-   - isolate
-   ```
- *
- *
- * ### Attributes
- *
- * The {@link ng.$compile.directive.Attributes Attributes} object - passed as a parameter in the
- * `link()` or `compile()` functions. It has a variety of uses.
- *
- * * *Accessing normalized attribute names:* Directives like 'ngBind' can be expressed in many ways:
- *   'ng:bind', `data-ng-bind`, or 'x-ng-bind'. The attributes object allows for normalized access
- *   to the attributes.
- *
- * * *Directive inter-communication:* All directives share the same instance of the attributes
- *   object which allows the directives to use the attributes object as inter directive
- *   communication.
- *
- * * *Supports interpolation:* Interpolation attributes are assigned to the attribute object
- *   allowing other directives to read the interpolated value.
- *
- * * *Observing interpolated attributes:* Use `$observe` to observe the value changes of attributes
- *   that contain interpolation (e.g. `src="{{bar}}"`). Not only is this very efficient but it's also
- *   the only way to easily get the actual value because during the linking phase the interpolation
- *   hasn't been evaluated yet and so the value is at this time set to `undefined`.
- *
- * ```js
- * function linkingFn(scope, elm, attrs, ctrl) {
- *   // get the attribute value
- *   console.log(attrs.ngModel);
- *
- *   // change the attribute
- *   attrs.$set('ngModel', 'new value');
- *
- *   // observe changes to interpolated attribute
- *   attrs.$observe('ngModel', function(value) {
- *     console.log('ngModel has changed value to ' + value);
- *   });
- * }
- * ```
- *
- * ## Example
- *
- * <div class="alert alert-warning">
- * **Note**: Typically directives are registered with `module.directive`. The example below is
- * to illustrate how `$compile` works.
- * </div>
- *
- <example module="compileExample">
-   <file name="index.html">
-    <script>
-      angular.module('compileExample', [], function($compileProvider) {
-        // configure new 'compile' directive by passing a directive
-        // factory function. The factory function injects the '$compile'
-        $compileProvider.directive('compile', function($compile) {
-          // directive factory creates a link function
-          return function(scope, element, attrs) {
-            scope.$watch(
-              function(scope) {
-                 // watch the 'compile' expression for changes
-                return scope.$eval(attrs.compile);
-              },
-              function(value) {
-                // when the 'compile' expression changes
-                // assign it into the current DOM
-                element.html(value);
-
-                // compile the new DOM and link it to the current
-                // scope.
-                // NOTE: we only compile .childNodes so that
-                // we don't get into infinite loop compiling ourselves
-                $compile(element.contents())(scope);
-              }
-            );
-          };
-        });
-      })
-      .controller('GreeterController', ['$scope', function($scope) {
-        $scope.name = 'Angular';
-        $scope.html = 'Hello {{name}}';
-      }]);
-    </script>
-    <div ng-controller="GreeterController">
-      <input ng-model="name"> <br/>
-      <textarea ng-model="html"></textarea> <br/>
-      <div compile="html"></div>
-    </div>
-   </file>
-   <file name="protractor.js" type="protractor">
-     it('should auto compile', function() {
-       var textarea = $('textarea');
-       var output = $('div[compile]');
-       // The initial state reads 'Hello Angular'.
-       expect(output.getText()).toBe('Hello Angular');
-       textarea.clear();
-       textarea.sendKeys('{{name}}!');
-       expect(output.getText()).toBe('Angular!');
-     });
-   </file>
- </example>
-
- *
- *
- * @param {string|DOMElement} element Element or HTML string to compile into a template function.
- * @param {function(angular.Scope, cloneAttachFn=)} transclude function available to directives - DEPRECATED.
- *
- * <div class="alert alert-danger">
- * **Note:** Passing a `transclude` function to the $compile function is deprecated, as it
- *   e.g. will not use the right outer scope. Please pass the transclude function as a
- *   `parentBoundTranscludeFn` to the link function instead.
- * </div>
- *
- * @param {number} maxPriority only apply directives lower than given priority (Only effects the
- *                 root element(s), not their children)
- * @returns {function(scope, cloneAttachFn=, options=)} a link function which is used to bind template
- * (a DOM element/tree) to a scope. Where:
- *
- *  * `scope` - A {@link ng.$rootScope.Scope Scope} to bind to.
- *  * `cloneAttachFn` - If `cloneAttachFn` is provided, then the link function will clone the
- *  `template` and call the `cloneAttachFn` function allowing the caller to attach the
- *  cloned elements to the DOM document at the appropriate place. The `cloneAttachFn` is
- *  called as: <br/> `cloneAttachFn(clonedElement, scope)` where:
- *
- *      * `clonedElement` - is a clone of the original `element` passed into the compiler.
- *      * `scope` - is the current scope with which the linking function is working with.
- *
- *  * `options` - An optional object hash with linking options. If `options` is provided, then the following
- *  keys may be used to control linking behavior:
- *
- *      * `parentBoundTranscludeFn` - the transclude function made available to
- *        directives; if given, it will be passed through to the link functions of
- *        directives found in `element` during compilation.
- *      * `transcludeControllers` - an object hash with keys that map controller names
- *        to a hash with the key `instance`, which maps to the controller instance;
- *        if given, it will make the controllers available to directives on the compileNode:
- *        ```
- *        {
- *          parent: {
- *            instance: parentControllerInstance
- *          }
- *        }
- *        ```
- *      * `futureParentElement` - defines the parent to which the `cloneAttachFn` will add
- *        the cloned elements; only needed for transcludes that are allowed to contain non html
- *        elements (e.g. SVG elements). See also the directive.controller property.
- *
- * Calling the linking function returns the element of the template. It is either the original
- * element passed in, or the clone of the element if the `cloneAttachFn` is provided.
- *
- * After linking the view is not updated until after a call to $digest which typically is done by
- * Angular automatically.
- *
- * If you need access to the bound view, there are two ways to do it:
- *
- * - If you are not asking the linking function to clone the template, create the DOM element(s)
- *   before you send them to the compiler and keep this reference around.
- *   ```js
- *     var element = $compile('<p>{{total}}</p>')(scope);
- *   ```
- *
- * - if on the other hand, you need the element to be cloned, the view reference from the original
- *   example would not point to the clone, but rather to the original template that was cloned. In
- *   this case, you can access the clone via the cloneAttachFn:
- *   ```js
- *     var templateElement = angular.element('<p>{{total}}</p>'),
- *         scope = ....;
- *
- *     var clonedElement = $compile(templateElement)(scope, function(clonedElement, scope) {
- *       //attach the clone to DOM document at the right place
- *     });
- *
- *     //now we have reference to the cloned DOM via `clonedElement`
- *   ```
- *
- *
- * For information on how the compiler works, see the
- * {@link guide/compiler Angular HTML Compiler} section of the Developer Guide.
- */
 
 var $compileMinErr = minErr('$compile');
 
@@ -41712,31 +39521,6 @@ function $ControllerProvider() {
   }];
 }
 
-/**
- * @ngdoc service
- * @name $document
- * @requires $window
- *
- * @description
- * A {@link angular.element jQuery or jqLite} wrapper for the browser's `window.document` object.
- *
- * @example
-   <example module="documentExample">
-     <file name="index.html">
-       <div ng-controller="ExampleController">
-         <p>$document title: <b ng-bind="title"></b></p>
-         <p>window.document title: <b ng-bind="windowTitle"></b></p>
-       </div>
-     </file>
-     <file name="script.js">
-       angular.module('documentExample', [])
-         .controller('ExampleController', ['$scope', '$document', function($scope, $document) {
-           $scope.title = $document[0].title;
-           $scope.windowTitle = angular.element(window.document)[0].title;
-         }]);
-     </file>
-   </example>
- */
 function $DocumentProvider() {
   this.$get = ['$window', function(window) {
     return jqLite(window.document);
@@ -42212,520 +39996,7 @@ function $HttpProvider() {
           ? $injector.get(interceptorFactory) : $injector.invoke(interceptorFactory));
     });
 
-    /**
-     * @ngdoc service
-     * @kind function
-     * @name $http
-     * @requires ng.$httpBackend
-     * @requires $cacheFactory
-     * @requires $rootScope
-     * @requires $q
-     * @requires $injector
-     *
-     * @description
-     * The `$http` service is a core Angular service that facilitates communication with the remote
-     * HTTP servers via the browser's [XMLHttpRequest](https://developer.mozilla.org/en/xmlhttprequest)
-     * object or via [JSONP](http://en.wikipedia.org/wiki/JSONP).
-     *
-     * For unit testing applications that use `$http` service, see
-     * {@link ngMock.$httpBackend $httpBackend mock}.
-     *
-     * For a higher level of abstraction, please check out the {@link ngResource.$resource
-     * $resource} service.
-     *
-     * The $http API is based on the {@link ng.$q deferred/promise APIs} exposed by
-     * the $q service. While for simple usage patterns this doesn't matter much, for advanced usage
-     * it is important to familiarize yourself with these APIs and the guarantees they provide.
-     *
-     *
-     * ## General usage
-     * The `$http` service is a function which takes a single argument — a {@link $http#usage configuration object} —
-     * that is used to generate an HTTP request and returns  a {@link ng.$q promise}.
-     *
-     * ```js
-     *   // Simple GET request example:
-     *   $http({
-     *     method: 'GET',
-     *     url: '/someUrl'
-     *   }).then(function successCallback(response) {
-     *       // this callback will be called asynchronously
-     *       // when the response is available
-     *     }, function errorCallback(response) {
-     *       // called asynchronously if an error occurs
-     *       // or server returns response with an error status.
-     *     });
-     * ```
-     *
-     * The response object has these properties:
-     *
-     *   - **data** – `{string|Object}` – The response body transformed with the transform
-     *     functions.
-     *   - **status** – `{number}` – HTTP status code of the response.
-     *   - **headers** – `{function([headerName])}` – Header getter function.
-     *   - **config** – `{Object}` – The configuration object that was used to generate the request.
-     *   - **statusText** – `{string}` – HTTP status text of the response.
-     *
-     * A response status code between 200 and 299 is considered a success status and
-     * will result in the success callback being called. Note that if the response is a redirect,
-     * XMLHttpRequest will transparently follow it, meaning that the error callback will not be
-     * called for such responses.
-     *
-     *
-     * ## Shortcut methods
-     *
-     * Shortcut methods are also available. All shortcut methods require passing in the URL, and
-     * request data must be passed in for POST/PUT requests. An optional config can be passed as the
-     * last argument.
-     *
-     * ```js
-     *   $http.get('/someUrl', config).then(successCallback, errorCallback);
-     *   $http.post('/someUrl', data, config).then(successCallback, errorCallback);
-     * ```
-     *
-     * Complete list of shortcut methods:
-     *
-     * - {@link ng.$http#get $http.get}
-     * - {@link ng.$http#head $http.head}
-     * - {@link ng.$http#post $http.post}
-     * - {@link ng.$http#put $http.put}
-     * - {@link ng.$http#delete $http.delete}
-     * - {@link ng.$http#jsonp $http.jsonp}
-     * - {@link ng.$http#patch $http.patch}
-     *
-     *
-     * ## Writing Unit Tests that use $http
-     * When unit testing (using {@link ngMock ngMock}), it is necessary to call
-     * {@link ngMock.$httpBackend#flush $httpBackend.flush()} to flush each pending
-     * request using trained responses.
-     *
-     * ```
-     * $httpBackend.expectGET(...);
-     * $http.get(...);
-     * $httpBackend.flush();
-     * ```
-     *
-     * ## Deprecation Notice
-     * <div class="alert alert-danger">
-     *   The `$http` legacy promise methods `success` and `error` have been deprecated.
-     *   Use the standard `then` method instead.
-     *   If {@link $httpProvider#useLegacyPromiseExtensions `$httpProvider.useLegacyPromiseExtensions`} is set to
-     *   `false` then these methods will throw {@link $http:legacy `$http/legacy`} error.
-     * </div>
-     *
-     * ## Setting HTTP Headers
-     *
-     * The $http service will automatically add certain HTTP headers to all requests. These defaults
-     * can be fully configured by accessing the `$httpProvider.defaults.headers` configuration
-     * object, which currently contains this default configuration:
-     *
-     * - `$httpProvider.defaults.headers.common` (headers that are common for all requests):
-     *   - `Accept: application/json, text/plain, * / *`
-     * - `$httpProvider.defaults.headers.post`: (header defaults for POST requests)
-     *   - `Content-Type: application/json`
-     * - `$httpProvider.defaults.headers.put` (header defaults for PUT requests)
-     *   - `Content-Type: application/json`
-     *
-     * To add or overwrite these defaults, simply add or remove a property from these configuration
-     * objects. To add headers for an HTTP method other than POST or PUT, simply add a new object
-     * with the lowercased HTTP method name as the key, e.g.
-     * `$httpProvider.defaults.headers.get = { 'My-Header' : 'value' }`.
-     *
-     * The defaults can also be set at runtime via the `$http.defaults` object in the same
-     * fashion. For example:
-     *
-     * ```
-     * module.run(function($http) {
-     *   $http.defaults.headers.common.Authorization = 'Basic YmVlcDpib29w';
-     * });
-     * ```
-     *
-     * In addition, you can supply a `headers` property in the config object passed when
-     * calling `$http(config)`, which overrides the defaults without changing them globally.
-     *
-     * To explicitly remove a header automatically added via $httpProvider.defaults.headers on a per request basis,
-     * Use the `headers` property, setting the desired header to `undefined`. For example:
-     *
-     * ```js
-     * var req = {
-     *  method: 'POST',
-     *  url: 'http://example.com',
-     *  headers: {
-     *    'Content-Type': undefined
-     *  },
-     *  data: { test: 'test' }
-     * }
-     *
-     * $http(req).then(function(){...}, function(){...});
-     * ```
-     *
-     * ## Transforming Requests and Responses
-     *
-     * Both requests and responses can be transformed using transformation functions: `transformRequest`
-     * and `transformResponse`. These properties can be a single function that returns
-     * the transformed value (`function(data, headersGetter, status)`) or an array of such transformation functions,
-     * which allows you to `push` or `unshift` a new transformation function into the transformation chain.
-     *
-     * ### Default Transformations
-     *
-     * The `$httpProvider` provider and `$http` service expose `defaults.transformRequest` and
-     * `defaults.transformResponse` properties. If a request does not provide its own transformations
-     * then these will be applied.
-     *
-     * You can augment or replace the default transformations by modifying these properties by adding to or
-     * replacing the array.
-     *
-     * Angular provides the following default transformations:
-     *
-     * Request transformations (`$httpProvider.defaults.transformRequest` and `$http.defaults.transformRequest`):
-     *
-     * - If the `data` property of the request configuration object contains an object, serialize it
-     *   into JSON format.
-     *
-     * Response transformations (`$httpProvider.defaults.transformResponse` and `$http.defaults.transformResponse`):
-     *
-     *  - If XSRF prefix is detected, strip it (see Security Considerations section below).
-     *  - If JSON response is detected, deserialize it using a JSON parser.
-     *
-     *
-     * ### Overriding the Default Transformations Per Request
-     *
-     * If you wish override the request/response transformations only for a single request then provide
-     * `transformRequest` and/or `transformResponse` properties on the configuration object passed
-     * into `$http`.
-     *
-     * Note that if you provide these properties on the config object the default transformations will be
-     * overwritten. If you wish to augment the default transformations then you must include them in your
-     * local transformation array.
-     *
-     * The following code demonstrates adding a new response transformation to be run after the default response
-     * transformations have been run.
-     *
-     * ```js
-     * function appendTransform(defaults, transform) {
-     *
-     *   // We can't guarantee that the default transformation is an array
-     *   defaults = angular.isArray(defaults) ? defaults : [defaults];
-     *
-     *   // Append the new transformation to the defaults
-     *   return defaults.concat(transform);
-     * }
-     *
-     * $http({
-     *   url: '...',
-     *   method: 'GET',
-     *   transformResponse: appendTransform($http.defaults.transformResponse, function(value) {
-     *     return doTransform(value);
-     *   })
-     * });
-     * ```
-     *
-     *
-     * ## Caching
-     *
-     * To enable caching, set the request configuration `cache` property to `true` (to use default
-     * cache) or to a custom cache object (built with {@link ng.$cacheFactory `$cacheFactory`}).
-     * When the cache is enabled, `$http` stores the response from the server in the specified
-     * cache. The next time the same request is made, the response is served from the cache without
-     * sending a request to the server.
-     *
-     * Note that even if the response is served from cache, delivery of the data is asynchronous in
-     * the same way that real requests are.
-     *
-     * If there are multiple GET requests for the same URL that should be cached using the same
-     * cache, but the cache is not populated yet, only one request to the server will be made and
-     * the remaining requests will be fulfilled using the response from the first request.
-     *
-     * You can change the default cache to a new object (built with
-     * {@link ng.$cacheFactory `$cacheFactory`}) by updating the
-     * {@link ng.$http#defaults `$http.defaults.cache`} property. All requests who set
-     * their `cache` property to `true` will now use this cache object.
-     *
-     * If you set the default cache to `false` then only requests that specify their own custom
-     * cache object will be cached.
-     *
-     * ## Interceptors
-     *
-     * Before you start creating interceptors, be sure to understand the
-     * {@link ng.$q $q and deferred/promise APIs}.
-     *
-     * For purposes of global error handling, authentication, or any kind of synchronous or
-     * asynchronous pre-processing of request or postprocessing of responses, it is desirable to be
-     * able to intercept requests before they are handed to the server and
-     * responses before they are handed over to the application code that
-     * initiated these requests. The interceptors leverage the {@link ng.$q
-     * promise APIs} to fulfill this need for both synchronous and asynchronous pre-processing.
-     *
-     * The interceptors are service factories that are registered with the `$httpProvider` by
-     * adding them to the `$httpProvider.interceptors` array. The factory is called and
-     * injected with dependencies (if specified) and returns the interceptor.
-     *
-     * There are two kinds of interceptors (and two kinds of rejection interceptors):
-     *
-     *   * `request`: interceptors get called with a http {@link $http#usage config} object. The function is free to
-     *     modify the `config` object or create a new one. The function needs to return the `config`
-     *     object directly, or a promise containing the `config` or a new `config` object.
-     *   * `requestError`: interceptor gets called when a previous interceptor threw an error or
-     *     resolved with a rejection.
-     *   * `response`: interceptors get called with http `response` object. The function is free to
-     *     modify the `response` object or create a new one. The function needs to return the `response`
-     *     object directly, or as a promise containing the `response` or a new `response` object.
-     *   * `responseError`: interceptor gets called when a previous interceptor threw an error or
-     *     resolved with a rejection.
-     *
-     *
-     * ```js
-     *   // register the interceptor as a service
-     *   $provide.factory('myHttpInterceptor', function($q, dependency1, dependency2) {
-     *     return {
-     *       // optional method
-     *       'request': function(config) {
-     *         // do something on success
-     *         return config;
-     *       },
-     *
-     *       // optional method
-     *      'requestError': function(rejection) {
-     *         // do something on error
-     *         if (canRecover(rejection)) {
-     *           return responseOrNewPromise
-     *         }
-     *         return $q.reject(rejection);
-     *       },
-     *
-     *
-     *
-     *       // optional method
-     *       'response': function(response) {
-     *         // do something on success
-     *         return response;
-     *       },
-     *
-     *       // optional method
-     *      'responseError': function(rejection) {
-     *         // do something on error
-     *         if (canRecover(rejection)) {
-     *           return responseOrNewPromise
-     *         }
-     *         return $q.reject(rejection);
-     *       }
-     *     };
-     *   });
-     *
-     *   $httpProvider.interceptors.push('myHttpInterceptor');
-     *
-     *
-     *   // alternatively, register the interceptor via an anonymous factory
-     *   $httpProvider.interceptors.push(function($q, dependency1, dependency2) {
-     *     return {
-     *      'request': function(config) {
-     *          // same as above
-     *       },
-     *
-     *       'response': function(response) {
-     *          // same as above
-     *       }
-     *     };
-     *   });
-     * ```
-     *
-     * ## Security Considerations
-     *
-     * When designing web applications, consider security threats from:
-     *
-     * - [JSON vulnerability](http://haacked.com/archive/2008/11/20/anatomy-of-a-subtle-json-vulnerability.aspx)
-     * - [XSRF](http://en.wikipedia.org/wiki/Cross-site_request_forgery)
-     *
-     * Both server and the client must cooperate in order to eliminate these threats. Angular comes
-     * pre-configured with strategies that address these issues, but for this to work backend server
-     * cooperation is required.
-     *
-     * ### JSON Vulnerability Protection
-     *
-     * A [JSON vulnerability](http://haacked.com/archive/2008/11/20/anatomy-of-a-subtle-json-vulnerability.aspx)
-     * allows third party website to turn your JSON resource URL into
-     * [JSONP](http://en.wikipedia.org/wiki/JSONP) request under some conditions. To
-     * counter this your server can prefix all JSON requests with following string `")]}',\n"`.
-     * Angular will automatically strip the prefix before processing it as JSON.
-     *
-     * For example if your server needs to return:
-     * ```js
-     * ['one','two']
-     * ```
-     *
-     * which is vulnerable to attack, your server can return:
-     * ```js
-     * )]}',
-     * ['one','two']
-     * ```
-     *
-     * Angular will strip the prefix, before processing the JSON.
-     *
-     *
-     * ### Cross Site Request Forgery (XSRF) Protection
-     *
-     * [XSRF](http://en.wikipedia.org/wiki/Cross-site_request_forgery) is an attack technique by
-     * which the attacker can trick an authenticated user into unknowingly executing actions on your
-     * website. Angular provides a mechanism to counter XSRF. When performing XHR requests, the
-     * $http service reads a token from a cookie (by default, `XSRF-TOKEN`) and sets it as an HTTP
-     * header (`X-XSRF-TOKEN`). Since only JavaScript that runs on your domain could read the
-     * cookie, your server can be assured that the XHR came from JavaScript running on your domain.
-     * The header will not be set for cross-domain requests.
-     *
-     * To take advantage of this, your server needs to set a token in a JavaScript readable session
-     * cookie called `XSRF-TOKEN` on the first HTTP GET request. On subsequent XHR requests the
-     * server can verify that the cookie matches `X-XSRF-TOKEN` HTTP header, and therefore be sure
-     * that only JavaScript running on your domain could have sent the request. The token must be
-     * unique for each user and must be verifiable by the server (to prevent the JavaScript from
-     * making up its own tokens). We recommend that the token is a digest of your site's
-     * authentication cookie with a [salt](https://en.wikipedia.org/wiki/Salt_(cryptography&#41;)
-     * for added security.
-     *
-     * The name of the headers can be specified using the xsrfHeaderName and xsrfCookieName
-     * properties of either $httpProvider.defaults at config-time, $http.defaults at run-time,
-     * or the per-request config object.
-     *
-     * In order to prevent collisions in environments where multiple Angular apps share the
-     * same domain or subdomain, we recommend that each application uses unique cookie name.
-     *
-     * @param {object} config Object describing the request to be made and how it should be
-     *    processed. The object has following properties:
-     *
-     *    - **method** – `{string}` – HTTP method (e.g. 'GET', 'POST', etc)
-     *    - **url** – `{string}` – Absolute or relative URL of the resource that is being requested.
-     *    - **params** – `{Object.<string|Object>}` – Map of strings or objects which will be serialized
-     *      with the `paramSerializer` and appended as GET parameters.
-     *    - **data** – `{string|Object}` – Data to be sent as the request message data.
-     *    - **headers** – `{Object}` – Map of strings or functions which return strings representing
-     *      HTTP headers to send to the server. If the return value of a function is null, the
-     *      header will not be sent. Functions accept a config object as an argument.
-     *    - **xsrfHeaderName** – `{string}` – Name of HTTP header to populate with the XSRF token.
-     *    - **xsrfCookieName** – `{string}` – Name of cookie containing the XSRF token.
-     *    - **transformRequest** –
-     *      `{function(data, headersGetter)|Array.<function(data, headersGetter)>}` –
-     *      transform function or an array of such functions. The transform function takes the http
-     *      request body and headers and returns its transformed (typically serialized) version.
-     *      See {@link ng.$http#overriding-the-default-transformations-per-request
-     *      Overriding the Default Transformations}
-     *    - **transformResponse** –
-     *      `{function(data, headersGetter, status)|Array.<function(data, headersGetter, status)>}` –
-     *      transform function or an array of such functions. The transform function takes the http
-     *      response body, headers and status and returns its transformed (typically deserialized) version.
-     *      See {@link ng.$http#overriding-the-default-transformations-per-request
-     *      Overriding the Default TransformationjqLiks}
-     *    - **paramSerializer** - `{string|function(Object<string,string>):string}` - A function used to
-     *      prepare the string representation of request parameters (specified as an object).
-     *      If specified as string, it is interpreted as function registered with the
-     *      {@link $injector $injector}, which means you can create your own serializer
-     *      by registering it as a {@link auto.$provide#service service}.
-     *      The default serializer is the {@link $httpParamSerializer $httpParamSerializer};
-     *      alternatively, you can use the {@link $httpParamSerializerJQLike $httpParamSerializerJQLike}
-     *    - **cache** – `{boolean|Cache}` – If true, a default $http cache will be used to cache the
-     *      GET request, otherwise if a cache instance built with
-     *      {@link ng.$cacheFactory $cacheFactory}, this cache will be used for
-     *      caching.
-     *    - **timeout** – `{number|Promise}` – timeout in milliseconds, or {@link ng.$q promise}
-     *      that should abort the request when resolved.
-     *    - **withCredentials** - `{boolean}` - whether to set the `withCredentials` flag on the
-     *      XHR object. See [requests with credentials](https://developer.mozilla.org/docs/Web/HTTP/Access_control_CORS#Requests_with_credentials)
-     *      for more information.
-     *    - **responseType** - `{string}` - see
-     *      [XMLHttpRequest.responseType](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#xmlhttprequest-responsetype).
-     *
-     * @returns {HttpPromise} Returns a {@link ng.$q `Promise}` that will be resolved to a response object
-     *                        when the request succeeds or fails.
-     *
-     *
-     * @property {Array.<Object>} pendingRequests Array of config objects for currently pending
-     *   requests. This is primarily meant to be used for debugging purposes.
-     *
-     *
-     * @example
-<example module="httpExample">
-<file name="index.html">
-  <div ng-controller="FetchController">
-    <select ng-model="method" aria-label="Request method">
-      <option>GET</option>
-      <option>JSONP</option>
-    </select>
-    <input type="text" ng-model="url" size="80" aria-label="URL" />
-    <button id="fetchbtn" ng-click="fetch()">fetch</button><br>
-    <button id="samplegetbtn" ng-click="updateModel('GET', 'http-hello.html')">Sample GET</button>
-    <button id="samplejsonpbtn"
-      ng-click="updateModel('JSONP',
-                    'https://angularjs.org/greet.php?callback=JSON_CALLBACK&name=Super%20Hero')">
-      Sample JSONP
-    </button>
-    <button id="invalidjsonpbtn"
-      ng-click="updateModel('JSONP', 'https://angularjs.org/doesntexist&callback=JSON_CALLBACK')">
-        Invalid JSONP
-      </button>
-    <pre>http status code: {{status}}</pre>
-    <pre>http response data: {{data}}</pre>
-  </div>
-</file>
-<file name="script.js">
-  angular.module('httpExample', [])
-    .controller('FetchController', ['$scope', '$http', '$templateCache',
-      function($scope, $http, $templateCache) {
-        $scope.method = 'GET';
-        $scope.url = 'http-hello.html';
 
-        $scope.fetch = function() {
-          $scope.code = null;
-          $scope.response = null;
-
-          $http({method: $scope.method, url: $scope.url, cache: $templateCache}).
-            then(function(response) {
-              $scope.status = response.status;
-              $scope.data = response.data;
-            }, function(response) {
-              $scope.data = response.data || "Request failed";
-              $scope.status = response.status;
-          });
-        };
-
-        $scope.updateModel = function(method, url) {
-          $scope.method = method;
-          $scope.url = url;
-        };
-      }]);
-</file>
-<file name="http-hello.html">
-  Hello, $http!
-</file>
-<file name="protractor.js" type="protractor">
-  var status = element(by.binding('status'));
-  var data = element(by.binding('data'));
-  var fetchBtn = element(by.id('fetchbtn'));
-  var sampleGetBtn = element(by.id('samplegetbtn'));
-  var sampleJsonpBtn = element(by.id('samplejsonpbtn'));
-  var invalidJsonpBtn = element(by.id('invalidjsonpbtn'));
-
-  it('should make an xhr GET request', function() {
-    sampleGetBtn.click();
-    fetchBtn.click();
-    expect(status.getText()).toMatch('200');
-    expect(data.getText()).toMatch(/Hello, \$http!/);
-  });
-
-// Commented out due to flakes. See https://github.com/angular/angular.js/issues/9185
-// it('should make a JSONP request to angularjs.org', function() {
-//   sampleJsonpBtn.click();
-//   fetchBtn.click();
-//   expect(status.getText()).toMatch('200');
-//   expect(data.getText()).toMatch(/Super Hero!/);
-// });
-
-  it('should make JSONP request to invalid URL and invoke the error handler',
-      function() {
-    invalidJsonpBtn.click();
-    fetchBtn.click();
-    expect(status.getText()).toMatch('0');
-    expect(data.getText()).toMatch('Request failed');
-  });
-</file>
-</example>
-     */
     function $http(requestConfig) {
 
       if (!isObject(requestConfig)) {
@@ -43712,132 +40983,6 @@ function $IntervalProvider() {
        function($rootScope,   $window,   $q,   $$q,   $browser) {
     var intervals = {};
 
-
-     /**
-      * @ngdoc service
-      * @name $interval
-      *
-      * @description
-      * Angular's wrapper for `window.setInterval`. The `fn` function is executed every `delay`
-      * milliseconds.
-      *
-      * The return value of registering an interval function is a promise. This promise will be
-      * notified upon each tick of the interval, and will be resolved after `count` iterations, or
-      * run indefinitely if `count` is not defined. The value of the notification will be the
-      * number of iterations that have run.
-      * To cancel an interval, call `$interval.cancel(promise)`.
-      *
-      * In tests you can use {@link ngMock.$interval#flush `$interval.flush(millis)`} to
-      * move forward by `millis` milliseconds and trigger any functions scheduled to run in that
-      * time.
-      *
-      * <div class="alert alert-warning">
-      * **Note**: Intervals created by this service must be explicitly destroyed when you are finished
-      * with them.  In particular they are not automatically destroyed when a controller's scope or a
-      * directive's element are destroyed.
-      * You should take this into consideration and make sure to always cancel the interval at the
-      * appropriate moment.  See the example below for more details on how and when to do this.
-      * </div>
-      *
-      * @param {function()} fn A function that should be called repeatedly.
-      * @param {number} delay Number of milliseconds between each function call.
-      * @param {number=} [count=0] Number of times to repeat. If not set, or 0, will repeat
-      *   indefinitely.
-      * @param {boolean=} [invokeApply=true] If set to `false` skips model dirty checking, otherwise
-      *   will invoke `fn` within the {@link ng.$rootScope.Scope#$apply $apply} block.
-      * @param {...*=} Pass additional parameters to the executed function.
-      * @returns {promise} A promise which will be notified on each iteration.
-      *
-      * @example
-      * <example module="intervalExample">
-      * <file name="index.html">
-      *   <script>
-      *     angular.module('intervalExample', [])
-      *       .controller('ExampleController', ['$scope', '$interval',
-      *         function($scope, $interval) {
-      *           $scope.format = 'M/d/yy h:mm:ss a';
-      *           $scope.blood_1 = 100;
-      *           $scope.blood_2 = 120;
-      *
-      *           var stop;
-      *           $scope.fight = function() {
-      *             // Don't start a new fight if we are already fighting
-      *             if ( angular.isDefined(stop) ) return;
-      *
-      *             stop = $interval(function() {
-      *               if ($scope.blood_1 > 0 && $scope.blood_2 > 0) {
-      *                 $scope.blood_1 = $scope.blood_1 - 3;
-      *                 $scope.blood_2 = $scope.blood_2 - 4;
-      *               } else {
-      *                 $scope.stopFight();
-      *               }
-      *             }, 100);
-      *           };
-      *
-      *           $scope.stopFight = function() {
-      *             if (angular.isDefined(stop)) {
-      *               $interval.cancel(stop);
-      *               stop = undefined;
-      *             }
-      *           };
-      *
-      *           $scope.resetFight = function() {
-      *             $scope.blood_1 = 100;
-      *             $scope.blood_2 = 120;
-      *           };
-      *
-      *           $scope.$on('$destroy', function() {
-      *             // Make sure that the interval is destroyed too
-      *             $scope.stopFight();
-      *           });
-      *         }])
-      *       // Register the 'myCurrentTime' directive factory method.
-      *       // We inject $interval and dateFilter service since the factory method is DI.
-      *       .directive('myCurrentTime', ['$interval', 'dateFilter',
-      *         function($interval, dateFilter) {
-      *           // return the directive link function. (compile function not needed)
-      *           return function(scope, element, attrs) {
-      *             var format,  // date format
-      *                 stopTime; // so that we can cancel the time updates
-      *
-      *             // used to update the UI
-      *             function updateTime() {
-      *               element.text(dateFilter(new Date(), format));
-      *             }
-      *
-      *             // watch the expression, and update the UI on change.
-      *             scope.$watch(attrs.myCurrentTime, function(value) {
-      *               format = value;
-      *               updateTime();
-      *             });
-      *
-      *             stopTime = $interval(updateTime, 1000);
-      *
-      *             // listen on DOM destroy (removal) event, and cancel the next UI update
-      *             // to prevent updating time after the DOM element was removed.
-      *             element.on('$destroy', function() {
-      *               $interval.cancel(stopTime);
-      *             });
-      *           }
-      *         }]);
-      *   </script>
-      *
-      *   <div>
-      *     <div ng-controller="ExampleController">
-      *       <label>Date format: <input ng-model="format"></label> <hr/>
-      *       Current time is: <span my-current-time="format"></span>
-      *       <hr/>
-      *       Blood 1 : <font color='red'>{{blood_1}}</font>
-      *       Blood 2 : <font color='red'>{{blood_2}}</font>
-      *       <button type="button" data-ng-click="fight()">Fight</button>
-      *       <button type="button" data-ng-click="stopFight()">StopFight</button>
-      *       <button type="button" data-ng-click="resetFight()">resetFight</button>
-      *     </div>
-      *   </div>
-      *
-      * </file>
-      * </example>
-      */
     function interval(fn, delay, count, invokeApply) {
       var hasParams = arguments.length > 4,
           args = hasParams ? sliceArgs(arguments, 4) : [],
@@ -44907,61 +42052,10 @@ function $LocationProvider() {
 }];
 }
 
-/**
- * @ngdoc service
- * @name $log
- * @requires $window
- *
- * @description
- * Simple service for logging. Default implementation safely writes the message
- * into the browser's console (if present).
- *
- * The main purpose of this service is to simplify debugging and troubleshooting.
- *
- * The default is to log `debug` messages. You can use
- * {@link ng.$logProvider ng.$logProvider#debugEnabled} to change this.
- *
- * @example
-   <example module="logExample">
-     <file name="script.js">
-       angular.module('logExample', [])
-         .controller('LogController', ['$scope', '$log', function($scope, $log) {
-           $scope.$log = $log;
-           $scope.message = 'Hello World!';
-         }]);
-     </file>
-     <file name="index.html">
-       <div ng-controller="LogController">
-         <p>Reload this page with open console, enter text and hit the log button...</p>
-         <label>Message:
-         <input type="text" ng-model="message" /></label>
-         <button ng-click="$log.log(message)">log</button>
-         <button ng-click="$log.warn(message)">warn</button>
-         <button ng-click="$log.info(message)">info</button>
-         <button ng-click="$log.error(message)">error</button>
-         <button ng-click="$log.debug(message)">debug</button>
-       </div>
-     </file>
-   </example>
- */
-
-/**
- * @ngdoc provider
- * @name $logProvider
- * @description
- * Use the `$logProvider` to configure how the application logs messages
- */
 function $LogProvider() {
   var debug = true,
       self = this;
 
-  /**
-   * @ngdoc method
-   * @name $logProvider#debugEnabled
-   * @description
-   * @param {boolean=} flag enable or disable debug level messages
-   * @returns {*} current value if used as getter or itself (chaining) if used as setter
-   */
   this.debugEnabled = function(flag) {
     if (isDefined(flag)) {
       debug = flag;
@@ -64102,363 +61196,327 @@ function plural(ms, n, name) {
 },{}],24:[function(require,module,exports){
 module.exports = require('./dist/browser')
 },{"./dist/browser":27}],25:[function(require,module,exports){
-module.exports=[
-    {        "id": 1,        "name": "Batman",        "world": "DC Comics"    },
-    {        "id": 2,        "name": "Gandalf",        "world": "Lord of the Rings"    },
-    {        "id": 3,        "name": "Wyldstyle",        "world": "The LEGO Movie"    },
-    {        "id": 4,        "name": "Aquaman",        "world": "DC Comics"    },
-    {        "id": 5,        "name": "Bad Cop",        "world": "The LEGO Movie"    },
-    {        "id": 6,        "name": "Bane",        "world": "DC Comics"    },
-    {        "id": 7,        "name": "Bart",        "world": "The Simpsons"    },
-    {        "id": 8,        "name": "Benny",        "world": "The LEGO Movie"    },
-    {        "id": 9,        "name": "Chell",        "world": "Portal 2"    },
-    {        "id": 10,        "name": "Cole",        "world": "Ninjago"    },
-    {        "id": 11,        "name": "Cragger",        "world": "Legends of Chima"    },
-    {        "id": 12,        "name": "Cyborg",        "world": "DC Comics"    },
-    {        "id": 13,        "name": "Cyberman",        "world": "Doctor Who"    },
-    {        "id": 14,        "name": "Doc Brown",        "world": "Back to the Future"    },
-    {        "id": 15,        "name": "The Doctor",        "world": "Doctor Who"    },
-    {        "id": 16,        "name": "Emmet",        "world": "The LEGO Movie"    },
-    {        "id": 17,        "name": "Eris",        "world": "Legends of Chima"    },
-    {        "id": 18,        "name": "Gimli",        "world": "Lord of the Rings"    },
-    {        "id": 19,        "name": "Smeagol",        "world": "Lord of the Rings"    },
-    {        "id": 20,        "name": "Harley Quinn",        "world": "DC Comics"    },
-    {        "id": 21,        "name": "Homer",        "world": "The Simpsons"    },
-    {        "id": 22,        "name": "Jay",        "world": "Ninjago"    },
-    {        "id": 23,        "name": "Joker",        "world": "DC Comics"    },
-    {        "id": 24,        "name": "Kai",        "world": "Ninjago"    },
-    {        "id": 25,        "name": "ACU",        "world": "Jurrasic Park"    },
-    {        "id": 26,        "name": "Gamer Kid",        "world": "Midway Arcade"    },
-    {        "id": 27,        "name": "Krusty",        "world": "The Simpsons"    },
-    {        "id": 28,        "name": "Laval",        "world": "Legends of Chima"    },
-    {        "id": 29,        "name": "Legolas",        "world": "Lord of the Rings"    },
-    {        "id": 30,        "name": "Lloyd",        "world": "Ninjago"    },
-    {        "id": 31,        "name": "Marty Mcfly",        "world": "Back to the Future"    },
-    {        "id": 32,        "name": "Nya",        "world": "Ninjago"    },
-    {        "id": 33,        "name": "Owen",        "world": "Jurrasic Park"    },
-    {        "id": 34,        "name": "Peter Venkman",        "world": "Ghostbusters"    },
-    {        "id": 35,        "name": "Slimer",        "world": "Ghostbusters"    },
-    {        "id": 36,        "name": "Scooby Doo",        "world": "Scooby-Doo"    },
-    {        "id": 37,        "name": "SenseiWu",        "world": "Ninjago"    },
-    {        "id": 38,        "name": "Shaggy",        "world": "Scooby-Doo"    },
-    {        "id": 39,        "name": "Stay Puft",        "world": "Ghostbusters"    },
-    {        "id": 40,        "name": "Superman",        "world": "DC Comics"    },
-    {        "id": 41,        "name": "Unikitty",        "world": "The LEGO Movie"    },
-    {        "id": 42,        "name": "Wicked Witch",        "world": "Wizard of OZ"    },
-    {        "id": 43,        "name": "Superwoman",        "world": "DC Comics"    },
-    {        "id": 44,        "name": "Zane",        "world": "Ninjago"    },
-    {        "id": 45,        "name": "Green Arrow",        "world": "DC Comics"    },
-    {        "id": 46,        "name": "Supergirl",        "world": "DC Comics"    },
-    {        "id": 47,        "name": "Abby Yates",        "world": "Ghostbuster 2016"    },
-    {        "id": 48,        "name": "Finn",        "world": "Adventure Time"    },
-    {        "id": 49,        "name": "Ethan Hunt",        "world": "Mission Impossible"    },
-    {        "id": 50,        "name": "Lumpy Space Princess",        "world": "Adventure Time"    },
-    {        "id": 51,        "name": "Jake",        "world": "Adventure Time"    },
-    {        "id": 52,        "name": "Harry Potter",        "world": "Harry Potter"    },
-    {        "id": 53,        "name": "Voldemort",        "world": "Harry Potter"    },
-    {        "id": 54,        "name": "Michael Knight", "world":"Knight Rider"},
-    {        "id": 55,        "name": "B.A. Baracus",        "world": "A-Team"    },
-    {        "id": 56,        "name": "Newt",        "world": "Fantastic Beasts"    },
-    {        "id": 57,        "name": "Sonic",        "world": "Sonic"    },
-    {        "id": 58,        "name": "Future Update",        "world": "N/A"    },
-    {        "id": 59,        "name": "Gizmo",        "world": "Gremlins"    },
-    {        "id": 60,        "name": "Stripe",        "world": "Gremlins"    },
-    {        "id": 61,        "name": "E.T.",        "world": "E.T."    },
-    {        "id": 62,        "name": "Tina",        "world": "Fantastic Beasts"    },
-    {        "id": 63,        "name": "Marceline",        "world": "Adventure Time"    },
-    {        "id": 64,        "name": "Bat Girl",        "world":"LEGO Batman Movie"},        
-    {        "id": 65,        "name": "Robin",         "world":"LEGO Batman Movie"},
-    {        "id": 66,        "name": "Sloth", "world":"Goonies" },
-    {        "id": 67,        "name": "Hermione Granger", "world":"Harry Potter" },
-    {        "id": 68,        "name": "Chase McCain", "world":"LEGO City" },
-    {        "id": 69,        "name": "Excalibur Batman","world":"lego Batman Movie"},
-    {        "id": 70,        "name": "Raven",         "world":"Teen Titans Go"},        
-    {        "id": 71,        "name": "Beast Boy",     "world":"Teen Titans Go"},
-    {        "id": 72,        "name": "Beetle Juice",  "world":"Beetle Juice"},
-    {        "id": 73,        "name": "Lord Vortech",  "world":"Lego Dimensions"},
-    {        "id": 74,        "name": "Blossom",        "world":"Power Puff Girls"},        
-    {        "id": 75,        "name": "Bubbles",       "world":"Power Puff Girls"},
-    {        "id": 76,        "name": "Buttercup",     "world":"Power Puff Girls"},
-    {        "id": 77,        "name": "Star Fire",     "world":"Teen Titans Go"},
-    {        "id": 78,        "name": "Test 15",        "world":"15"},        
-    {        "id": 79,        "name": "Test 16",       "world":"16"},
-    {        "id": 80,        "name": "Test 17",       "world":"17"},
-    {        "id": 81,        "name": "Test 16",       "world":"18"},
-    {        "id": 82,        "name": "Test 17",       "world":"19"},
-    {        "id": 83,        "name": "Test 18",        "world":"20"},
-    {        "id": 768,       "name": "Unknown",      "world":"Unknown"},
-    {        "id": 769,       "name": "Supergirl Red Lantern", "world":"Dc Comics"},
-    {        "id": 770,       "name": "Unknown",      "world":"Unknown"}
+module.exports = [
+    { "id": 1, "name": "Batman", "world": "DC Comics", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 2, "name": "Gandalf", "world": "Lord of the Rings", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 3, "name": "Wyldstyle", "world": "The LEGO Movie", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 4, "name": "Aquaman", "world": "DC Comics", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 5, "name": "Bad Cop", "world": "The LEGO Movie", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 6, "name": "Bane", "world": "DC Comics", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 7, "name": "Bart Simpson", "world": "The Simpsons", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 8, "name": "Benny", "world": "The LEGO Movie", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 9, "name": "Chell", "world": "Portal 2", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 10, "name": "Cole", "world": "Ninjago", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 11, "name": "Cragger", "world": "Legends of Chima", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 12, "name": "Cyborg", "world": "DC Comics", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 13, "name": "Cyberman", "world": "Doctor Who", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 14, "name": "Doc Brown", "world": "Back to the Future", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 15, "name": "The Doctor", "world": "Doctor Who", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 16, "name": "Emmet", "world": "The LEGO Movie", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 17, "name": "Eris", "world": "Legends of Chima", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 18, "name": "Gimli", "world": "Lord of the Rings", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 19, "name": "Gollum", "world": "Lord of the Rings", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 20, "name": "Harley Quinn", "world": "DC Comics", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 21, "name": "Homer Simpson", "world": "The Simpsons", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 22, "name": "Jay", "world": "Ninjago", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 23, "name": "Joker", "world": "DC Comics", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 24, "name": "Kai", "world": "Ninjago", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 25, "name": "ACU Trooper", "world": "Jurrasic Park", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 26, "name": "Gamer Kid", "world": "Midway Arcade", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 27, "name": "Krusty", "world": "The Simpsons", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 28, "name": "Laval", "world": "Legends of Chima", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 29, "name": "Legolas", "world": "Lord of the Rings", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 30, "name": "Lloyd", "world": "Ninjago", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 31, "name": "Marty McFly", "world": "Back to the Future", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 32, "name": "Nya", "world": "Ninjago", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 33, "name": "Owen Grady", "world": "Jurrasic Park", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 34, "name": "Peter Venkman", "world": "Ghostbusters", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 35, "name": "Slimer", "world": "Ghostbusters", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 36, "name": "Scooby Doo", "world": "Scooby-Doo", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 37, "name": "Sensei Wu", "world": "Ninjago", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 38, "name": "Shaggy", "world": "Scooby-Doo", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 39, "name": "Stay Puft", "world": "Ghostbusters", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 40, "name": "Superman", "world": "DC Comics", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 41, "name": "Unikitty", "world": "The LEGO Movie", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 42, "name": "Wicked Witch", "world": "Wizard of OZ", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 43, "name": "Wonder Woman", "world": "DC Comics", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 44, "name": "Zane", "world": "Ninjago", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 45, "name": "Green Arrow", "world": "DC Comics", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 46, "name": "Supergirl", "world": "DC Comics", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 47, "name": "Abby Yates", "world": "Ghostbuster 2016", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 48, "name": "Finn", "world": "Adventure Time", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 49, "name": "Ethan Hunt", "world": "Mission Impossible", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 50, "name": "Lumpy Space Princess", "world": "Adventure Time", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 51, "name": "Jake", "world": "Adventure Time", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 52, "name": "Harry Potter", "world": "Harry Potter", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 53, "name": "Voldemort", "world": "Harry Potter", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 54, "name": "Michael Knight", "world": "Knight Rider", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 55, "name": "B.A. Baracus", "world": "A-Team", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 56, "name": "Newt", "world": "Fantastic Beasts", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 57, "name": "Sonic the Hedgehog", "world": "Sonic", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 59, "name": "Gizmo", "world": "Gremlins", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 60, "name": "Stripe", "world": "Gremlins", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 61, "name": "E.T.", "world": "E.T.", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 62, "name": "Tina Goldstein", "world": "Fantastic Beasts", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 63, "name": "Marceline", "world": "Adventure Time", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 64, "name": "Batgirl", "world": "LEGO Batman Movie", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 65, "name": "Robin", "world": "LEGO Batman Movie", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 66, "name": "Sloth", "world": "Goonies", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 67, "name": "Hermione Granger", "world": "Harry Potter", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 68, "name": "Chase McCain", "world": "LEGO City", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 69, "name": "Excalibur Batman", "world": "lego Batman Movie", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 70, "name": "Raven", "world": "Teen Titans Go", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 71, "name": "Beast Boy", "world": "Teen Titans Go", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 72, "name": "Beetle Juice", "world": "Beetle Juice", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 74, "name": "Blossom", "world": "Power Puff Girls", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 75, "name": "Bubbles", "world": "Power Puff Girls", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 76, "name": "Buttercup", "world": "Power Puff Girls", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 77, "name": "Starfire", "world": "Teen Titans Go", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 769, "name": "Supergirl Red Lantern", "world": "Dc Comics", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" }
 ]
 
 },{}],26:[function(require,module,exports){
-module.exports=[
-    {        "id": 1000,        "upgrademap": 0,        "rebuild": 0,        "name": "Police Car"    },
-    {        "id": 1001,        "upgrademap": 0,        "rebuild": 1,        "name": "* Aerial Squad Car"    },
-    {        "id": 1002,        "upgrademap": 0,        "rebuild": 2,        "name": "* Missile Striker"    },
-    {        "id": 1003,        "upgrademap": 0,        "rebuild": 0,        "name": "Gravity Sprinter"    },
-    {        "id": 1004,        "upgrademap": 0,        "rebuild": 1,        "name": "* Street Shredder"    },
-    {        "id": 1005,        "upgrademap": 0,        "rebuild": 2,        "name": "* Sky Clobberer"    },
-    {        "id": 1006,        "upgrademap": 0,        "rebuild": 0,        "name": "Batmobile"    },
-    {        "id": 1007,        "upgrademap": 0,        "rebuild": 1,        "name": "* Batblaster"    },
-    {        "id": 1008,        "upgrademap": 0,        "rebuild": 2,        "name": "* Sonic Batray"    },
-    {        "id": 1009,        "upgrademap": 0,        "rebuild": 0,        "name": "Benny's Spaceship"    },
-    {        "id": 1010,        "upgrademap": 0,        "rebuild": 1,        "name": "* Lasercraft"    },
-    {        "id": 1011,        "upgrademap": 0,        "rebuild": 2,        "name": "* The Annihilator"    },
-    {        "id": 1012,        "upgrademap": 0,        "rebuild": 0,        "name": "Delorean"    },
-    {        "id": 1013,        "upgrademap": 0,        "rebuild": 1,        "name": "* Ultra Time Machine"    },
-    {        "id": 1014,        "upgrademap": 0,        "rebuild": 2,        "name": "* Electric Time Machine"    },
-    {        "id": 1015,        "upgrademap": 0,        "rebuild": 0,        "name": "Hoverboard"    },
-    {        "id": 1016,        "upgrademap": 0,        "rebuild": 1,        "name": "* Cyclone Board"    },
-    {        "id": 1017,        "upgrademap": 0,        "rebuild": 2,        "name": "* Ultimate Hoverjet"    },
-    {        "id": 1018,        "upgrademap": 0,        "rebuild": 0,        "name": "Eagle interceptor"    },
-    {        "id": 1019,        "upgrademap": 0,        "rebuild": 1,        "name": "* Eagle Skyblazer"    },
-    {        "id": 1020,        "upgrademap": 0,        "rebuild": 2,        "name": "* Eagle Swoop Diver"    },
-    {        "id": 1021,        "upgrademap": 0,        "rebuild": 0,        "name": "Cragger's Fireship"    },
-    {        "id": 1022,        "upgrademap": 0,        "rebuild": 1,        "name": "* Croc Command Sub"    },
-    {        "id": 1023,        "upgrademap": 0,        "rebuild": 2,        "name": "* Swamp Skimmer"    },
-    {        "id": 1024,        "upgrademap": 0,        "rebuild": 0,        "name": "Cyber Guard"    },
-    {        "id": 1025,        "upgrademap": 0,        "rebuild": 1,        "name": "* Cyber-Wrecker"    },
-    {        "id": 1026,        "upgrademap": 0,        "rebuild": 2,        "name": "* Laser Robot Walker"    },
-    {        "id": 1027,        "upgrademap": 0,        "rebuild": 0,        "name": "K9"    },
-    {        "id": 1028,        "upgrademap": 0,        "rebuild": 1,        "name": "* K9 Ruff Rover"    },
-    {        "id": 1029,        "upgrademap": 0,        "rebuild": 2,        "name": "* K9 Laser Cutter"    },
-    {        "id": 1030,        "upgrademap": 0,        "rebuild": 0,        "name": "TARDIS"    },
-    {        "id": 1031,        "upgrademap": 0,        "rebuild": 1,        "name": "* Laser-Pulse TARDIS"    },
-    {        "id": 1032,        "upgrademap": 0,        "rebuild": 2,        "name": "* Energy-Burst TARDIS"    },
-    {        "id": 1033,        "upgrademap": 0,        "rebuild": 0,        "name": "Emmet's Excavator"    },
-    {        "id": 1034,        "upgrademap": 0,        "rebuild": 1,        "name": "* The Destroydozer"    },
-    {        "id": 1035,        "upgrademap": 0,        "rebuild": 2,        "name": "* Destruct-o-Mech"    },
-    {        "id": 1036,        "upgrademap": 0,        "rebuild": 0,        "name": "Winged Monkey"    },
-    {        "id": 1037,        "upgrademap": 0,        "rebuild": 1,        "name": "* Battle Monkey"    },
-    {        "id": 1038,        "upgrademap": 0,        "rebuild": 2,        "name": "* Commander Monkey"    },
-    {        "id": 1039,        "upgrademap": 0,        "rebuild": 0,        "name": "Axe Chariot"    },
-    {        "id": 1040,        "upgrademap": 0,        "rebuild": 1,        "name": "* Axe Hurler"    },
-    {        "id": 1041,        "upgrademap": 0,        "rebuild": 2,        "name": "* Soaring Chariot"    },
-    {        "id": 1042,        "upgrademap": 0,        "rebuild": 0,        "name": "Shelob the Great"    },
-    {        "id": 1043,        "upgrademap": 0,        "rebuild": 1,        "name": "* 8-Legged Stalker"    },
-    {        "id": 1044,        "upgrademap": 0,        "rebuild": 2,        "name": "* Poison Slinger"    },
-    {        "id": 1045,        "upgrademap": 0,        "rebuild": 0,        "name": "Homer's Car"    },
-    {        "id": 1046,        "upgrademap": 0,        "rebuild": 1,        "name": "* Homercraft"    },
-    {        "id": 1047,        "upgrademap": 0,        "rebuild": 2,        "name": "* SubmaHomer"    },
-    {        "id": 1048,        "upgrademap": 0,        "rebuild": 0,        "name": "Taunt-o-Vision"    },
-    {        "id": 1049,        "upgrademap": 0,        "rebuild": 1,        "name": "* Blast Cam"    },
-    {        "id": 1050,        "upgrademap": 0,        "rebuild": 2,        "name": "* The MechaHomer"    },
-    {        "id": 1051,        "upgrademap": 0,        "rebuild": 0,        "name": "Velociraptor"    },
-    {        "id": 1052,        "upgrademap": 0,        "rebuild": 1,        "name": "* Spike Attack Raptor"    },
-    {        "id": 1053,        "upgrademap": 0,        "rebuild": 2,        "name": "* Venom Raptor"    },
-    {        "id": 1054,        "upgrademap": 0,        "rebuild": 0,        "name": "Gyro Sphere"    },
-    {        "id": 1055,        "upgrademap": 0,        "rebuild": 1,        "name": "* Sonic Beam Gyrosphere"    },
-    {        "id": 1056,        "upgrademap": 0,        "rebuild": 2,        "name": "* Speed Boost Gyrosphere"    },
-    {        "id": 1057,        "upgrademap": 0,        "rebuild": 0,        "name": "Clown Bike"    },
-    {        "id": 1058,        "upgrademap": 0,        "rebuild": 1,        "name": "* Cannon Bike"    },
-    {        "id": 1059,        "upgrademap": 0,        "rebuild": 2,        "name": "* Anti-Gravity Rocket Bike"    },
-    {        "id": 1060,        "upgrademap": 0,        "rebuild": 0,        "name": "Mighty Lion Rider"    },
-    {        "id": 1061,        "upgrademap": 0,        "rebuild": 1,        "name": "* Lion Blazer"    },
-    {        "id": 1062,        "upgrademap": 0,        "rebuild": 2,        "name": "* Fire Lion"    },
-    {        "id": 1063,        "upgrademap": 0,        "rebuild": 0,        "name": "Arrow Launcher"    },
-    {        "id": 1064,        "upgrademap": 0,        "rebuild": 1,        "name": "* Seeking Shooter"    },
-    {        "id": 1065,        "upgrademap": 0,        "rebuild": 2,        "name": "* Triple Ballista"    },
-    {        "id": 1066,        "upgrademap": 0,        "rebuild": 0,        "name": "Mystery Machine"    },
-    {        "id": 1067,        "upgrademap": 0,        "rebuild": 1,        "name": "* Mystery Tow"    },
-    {        "id": 1068,        "upgrademap": 0,        "rebuild": 2,        "name": "* Mystery Monster"    },
-    {        "id": 1069,        "upgrademap": 0,        "rebuild": 0,        "name": "Boulder Bomber"    },
-    {        "id": 1070,        "upgrademap": 0,        "rebuild": 1,        "name": "* Boulder Blaster"    },
-    {        "id": 1071,        "upgrademap": 0,        "rebuild": 2,        "name": "* Cyclone Jet"    },
-    {        "id": 1072,        "upgrademap": 0,        "rebuild": 0,        "name": "Storm Fighter"    },
-    {        "id": 1073,        "upgrademap": 0,        "rebuild": 1,        "name": "* Lightning Jet"    },
-    {        "id": 1074,        "upgrademap": 0,        "rebuild": 2,        "name": "* Electro-Shooter"    },
-    {        "id": 1075,        "upgrademap": 0,        "rebuild": 0,        "name": "Blade Bike"    },
-    {        "id": 1076,        "upgrademap": 0,        "rebuild": 1,        "name": "* Flying Fire Bike"    },
-    {        "id": 1077,        "upgrademap": 0,        "rebuild": 2,        "name": "* Blades of Fire"    },
-    {        "id": 1078,        "upgrademap": 0,        "rebuild": 0,        "name": "Samurai Mech"    },
-    {        "id": 1079,        "upgrademap": 0,        "rebuild": 1,        "name": "* Samurai Shooter"    },
-    {        "id": 1080,        "upgrademap": 0,        "rebuild": 2,        "name": "* Soaring Samurai Mech"    },
-    {        "id": 1081,        "upgrademap": 0,        "rebuild": 0,        "name": "Companion Cube"    },
-    {        "id": 1082,        "upgrademap": 0,        "rebuild": 1,        "name": "* Laser Deflector"    },
-    {        "id": 1083,        "upgrademap": 0,        "rebuild": 2,        "name": "* Gold Heart Emitter"    },
-    {        "id": 1084,        "upgrademap": 0,        "rebuild": 0,        "name": "Sentry Turret"    },
-    {        "id": 1085,        "upgrademap": 0,        "rebuild": 1,        "name": "* Turret Striker"    },
-    {        "id": 1086,        "upgrademap": 0,        "rebuild": 2,        "name": "* Flying Turret Carrier"    },
-    {        "id": 1087,        "upgrademap": 0,        "rebuild": 0,        "name": "Scooby Snack"    },
-    {        "id": 1088,        "upgrademap": 0,        "rebuild": 1,        "name": "* Scooby Fire Snack"    },
-    {        "id": 1089,        "upgrademap": 0,        "rebuild": 2,        "name": "* Scooby Ghost Snack"    },
-    {        "id": 1090,        "upgrademap": 0,        "rebuild": 0,        "name": "Cloud Cukko Car"    },
-    {        "id": 1091,        "upgrademap": 0,        "rebuild": 1,        "name": "* X-Stream Soaker"    },
-    {        "id": 1092,        "upgrademap": 0,        "rebuild": 2,        "name": "* Rainbow Cannon"    },
-    {        "id": 1093,        "upgrademap": 0,        "rebuild": 0,        "name": "Invisible Jet"    },
-    {        "id": 1094,        "upgrademap": 0,        "rebuild": 1,        "name": "* Stealth Laser Shooter"    },
-    {        "id": 1095,        "upgrademap": 0,        "rebuild": 2,        "name": "* Torpedo Bomber"    },
-    {        "id": 1096,        "upgrademap": 0,        "rebuild": 0,        "name": "Ninja Copter"    },
-    {        "id": 1097,        "upgrademap": 0,        "rebuild": 1,        "name": "* Glaciator"    },
-    {        "id": 1098,        "upgrademap": 0,        "rebuild": 2,        "name": "* Freeze Fighter"    },
-    {        "id": 1099,        "upgrademap": 0,        "rebuild": 0,        "name": "Traveling Time Train"    },
-    {        "id": 1100,        "upgrademap": 0,        "rebuild": 1,        "name": "* (Traveling Time Train - rebuilt 1)"    },
-    {        "id": 1101,        "upgrademap": 0,        "rebuild": 2,        "name": "* (Traveling Time Train - rebuilt 2)"    },
-    {        "id": 1102,        "upgrademap": 0,        "rebuild": 0,        "name": "Aqua Watercraft"    },
-    {        "id": 1103,        "upgrademap": 0,        "rebuild": 1,        "name": "* (Aqua Watercraft - rebuilt 1)"    },
-    {        "id": 1104,        "upgrademap": 0,        "rebuild": 2,        "name": "* (Aqua Watercraft - rebuilt 2)"    },
-    {        "id": 1105,        "upgrademap": 0,        "rebuild": 0,        "name": "Drill Driver"    },
-    {        "id": 1106,        "upgrademap": 0,        "rebuild": 1,        "name": "* (Drill Driver - rebuilt 1)"    },
-    {        "id": 1107,        "upgrademap": 0,        "rebuild": 2,        "name": "* (Drill Driver - rebuilt 2)"    },
-    {        "id": 1108,        "upgrademap": 0,        "rebuild": 0,        "name": "Quinn-mobile"    },
-    {        "id": 1109,        "upgrademap": 0,        "rebuild": 1,        "name": "* (Quinn-mobile - rebuilt 1)"    },
-    {        "id": 1110,        "upgrademap": 0,        "rebuild": 2,        "name": "* (Quinn-mobile - rebuilt 2)"    },
-    {        "id": 1111,        "upgrademap": 0,        "rebuild": 0,        "name": "The Jokers Chopper"    },
-    {        "id": 1112,        "upgrademap": 0,        "rebuild": 1,        "name": "* (The Jokers Chopper - rebuilt 1)"    },
-    {        "id": 1113,        "upgrademap": 0,        "rebuild": 2,        "name": "* (The Jokers Chopper - rebuilt 2)"    },
-    {        "id": 1114,        "upgrademap": 0,        "rebuild": 0,        "name": "Hover Pod"    },
-    {        "id": 1115,        "upgrademap": 0,        "rebuild": 1,        "name": "* (Hover Pod - rebuilt 1)"    },
-    {        "id": 1116,        "upgrademap": 0,        "rebuild": 2,        "name": "* (Hover Pod - rebuilt 2)"    },
-    {        "id": 1117,        "upgrademap": 0,        "rebuild": 0,        "name": "Dalek"    },
-    {        "id": 1118,        "upgrademap": 0,        "rebuild": 1,        "name": "* (Dalek - rebuilt 1)"    },
-    {        "id": 1119,        "upgrademap": 0,        "rebuild": 2,        "name": "* (Dalek - rebuilt 2)"    },
-    {        "id": 1120,        "upgrademap": 0,        "rebuild": 0,        "name": "Ecto-1"    },
-    {        "id": 1121,        "upgrademap": 0,        "rebuild": 1,        "name": "* (Ecto-1 - rebuilt 1)"    },
-    {        "id": 1122,        "upgrademap": 0,        "rebuild": 2,        "name": "* (Ecto-1 - rebuilt 2)"    },
-    {        "id": 1123,        "upgrademap": 0,        "rebuild": 0,        "name": "Ghost Trap"    },
-    {        "id": 1124,        "upgrademap": 0,        "rebuild": 1,        "name": "* (Ghost Trap - rebuilt 1)"    },
-    {        "id": 1125,        "upgrademap": 0,        "rebuild": 2,        "name": "* (Ghost Trap - rebuilt 2)"    },
-    {        "id": 1126,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1127,        "upgrademap": 0,        "rebuild": 1,        "name": "unknown"    },
-    {        "id": 1128,        "upgrademap": 0,        "rebuild": 2,        "name": "unknown"    },
-    {        "id": 1129,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1130,        "upgrademap": 0,        "rebuild": 1,        "name": "unknown"    },
-    {        "id": 1131,        "upgrademap": 0,        "rebuild": 2,        "name": "unknown"    },
-    {        "id": 1132,        "upgrademap": 0,        "rebuild": 0,        "name": "Llyod's Golden Dragon"    },
-    {        "id": 1133,        "upgrademap": 0,        "rebuild": 1,        "name": "* (Golden Dragon - rebuilt 1)"    },
-    {        "id": 1134,        "upgrademap": 0,        "rebuild": 2,        "name": "* (Golden Dragon - rebuilt 2)"    },
-    {        "id": 1135,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1136,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1137,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1138,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1139,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1140,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1141,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1142,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1143,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1144,        "upgrademap": 0,        "rebuild": 0,        "name": "Mega Flight Dragon"    },
-    {        "id": 1145,        "upgrademap": 0,        "rebuild": 1,        "name": "* (Mega Flight Dragon - rebuilt 1)"    },
-    {        "id": 1146,        "upgrademap": 0,        "rebuild": 2,        "name": "* (Mega Flight Dragon - rebuilt 2)"    },
-    {        "id": 1147,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1148,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1149,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1150,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1151,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1152,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1153,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1154,        "upgrademap": 0,        "rebuild": 0,        "name": "unknown"    },
-    {        "id": 1155,        "upgrademap": 0,        "rebuild": 0,        "name": "Flying White Dragon"    },
-    {        "id": 1156,        "upgrademap": 0,        "rebuild": 1,        "name": "* Golden Fire Dragon"    },
-    {        "id": 1157,        "upgrademap": 0,        "rebuild": 2,        "name": "* Ultra Destruction Dragon"    },
-    {        "id": 1158,        "upgrademap": 0,        "rebuild": 0,        "name": "Arcade Machine"    },
-    {        "id": 1159,        "upgrademap": 0,        "rebuild": 1,        "name": "* 8-bit Shooter"    },
-    {        "id": 1160,        "upgrademap": 0,        "rebuild": 2,        "name": "* The Pixelator"    },
-    {        "id": 1161,        "upgrademap": 0,        "rebuild": 0,        "name": "G-61555 Spy Hunter"    },
-    {        "id": 1162,        "upgrademap": 0,        "rebuild": 1,        "name": "* The Interdiver"    },
-    {        "id": 1163,        "upgrademap": 0,        "rebuild": 2,        "name": "* Aerial Spyhunter"    },
-    {        "id": 1164,        "upgrademap": 0,        "rebuild": 0,        "name": "Slime Shooter"    },
-    {        "id": 1165,        "upgrademap": 0,        "rebuild": 1,        "name": "* Slime Exploder"    },
-    {        "id": 1166,        "upgrademap": 0,        "rebuild": 2,        "name": "* Slime Streamer"    },
-    {        "id": 1167,        "upgrademap": 0,        "rebuild": 0,        "name": "Terror Dog"    },
-    {        "id": 1168,        "upgrademap": 0,        "rebuild": 1,        "name": "* Terror Dog Destroyer"    },
-    {        "id": 1169,        "upgrademap": 0,        "rebuild": 2,        "name": "* Soaring Terror Dog"    },
-    {        "id": 1170,        "upgrademap": 0,        "rebuild": 0,        "name": "Ancient War Elephant"    },
-    {        "id": 1171,        "upgrademap": 0,        "rebuild": 1,        "name": "* Cosmic Squid"    },
-    {        "id": 1172,        "upgrademap": 0,        "rebuild": 2,        "name": "* Psychic Submarine"    },
-    {        "id": 1173,        "upgrademap": 0,        "rebuild": 0,        "name": "BMO"    },
-    {        "id": 1174,        "upgrademap": 0,        "rebuild": 1,        "name": "* DOGMO"    },
-    {        "id": 1175,        "upgrademap": 0,        "rebuild": 2,        "name": "* SNAKEMO"    },
-    {        "id": 1176,        "upgrademap": 0,        "rebuild": 0,        "name": "Jakemoblie"    },
-    {        "id": 1177,        "upgrademap": 0,        "rebuild": 1,        "name": "* Snail Dude Jake"    },
-    {        "id": 1178,        "upgrademap": 0,        "rebuild": 2,        "name": "* Hover Jake"    },
-    {        "id": 1179,        "upgrademap": 0,        "rebuild": 0,        "name": "Lumpy Car"    },
-    {        "id": 1180,        "upgrademap": 0,        "rebuild": 1,        "name": "* Lumpy Truck"    },
-    {        "id": 1181,        "upgrademap": 0,        "rebuild": 2,        "name": "* Lumpy Land Whale"    },
-    {        "id": 1182,        "upgrademap": 0,        "rebuild": 0,        "name": "Lunatic Amp"    },
-    {        "id": 1183,        "upgrademap": 0,        "rebuild": 1,        "name": "* Lunatic Amp 2"    },
-    {        "id": 1184,        "upgrademap": 0,        "rebuild": 2,        "name": "* Lunatic Amp 3"    },
-    {        "id": 1185,        "upgrademap": 0,        "rebuild": 0,        "name": "B.A.s Van"    },
-    {        "id": 1186,        "upgrademap": 0,        "rebuild": 1,        "name": "* Fool Smasher"    },
-    {        "id": 1187,        "upgrademap": 0,        "rebuild": 2,        "name": "* The Pain Plane"    },
-    {        "id": 1188,        "upgrademap": 0,        "rebuild": 0,        "name": "Phone Home"    },
-    {        "id": 1189,        "upgrademap": 0,        "rebuild": 1,        "name": "* Phone Home 2"    },
-    {        "id": 1190,        "upgrademap": 0,        "rebuild": 2,        "name": "* Phone Home 3"    },
-    {        "id": 1191,        "upgrademap": 0,        "rebuild": 0,        "name": "Niffler"    },
-    {        "id": 1192,        "upgrademap": 0,        "rebuild": 1,        "name": "* Niffler 2"    },
-    {        "id": 1193,        "upgrademap": 0,        "rebuild": 2,        "name": "* Niffler 3"    },
-    {        "id": 1194,        "upgrademap": 0,        "rebuild": 0,        "name": "Swooping Evil"    },
-    {        "id": 1195,        "upgrademap": 0,        "rebuild": 1,        "name": "* Swooping Evil 2"    },
-    {        "id": 1196,        "upgrademap": 0,        "rebuild": 2,        "name": "* Swooping Evil 3"    },
-    {        "id": 1197,        "upgrademap": 0,        "rebuild": 0,        "name": "Ecto 1"    },
-    {        "id": 1198,        "upgrademap": 0,        "rebuild": 1,        "name": "* Ectozer"    },
-    {        "id": 1199,        "upgrademap": 0,        "rebuild": 2,        "name": "* Ecto1 Rebuild 2"    },
-    {        "id": 1200,        "upgrademap": 0,        "rebuild": 2,        "name": "Flash 'n' Finish"    },
-    {        "id": 1201,        "upgrademap": 0,        "rebuild": 0,        "name": "* Rampage Record Player"    },
-    {        "id": 1202,        "upgrademap": 0,        "rebuild": 1,        "name": "* Stripe's Throne"    },
-    {        "id": 1203,        "upgrademap": 0,        "rebuild": 2,        "name": "R.C. Racer"    },
-    {        "id": 1204,        "upgrademap": 0,        "rebuild": 0,        "name": "* Gadet-o-matic"    },
-    {        "id": 1205,        "upgrademap": 0,        "rebuild": 1,        "name": "* Scarlet Scorpion"    },
-    {        "id": 1206,        "upgrademap": 0,        "rebuild": 0,        "name": "Hogwarts Express"    },
-    {        "id": 1207,        "upgrademap": 0,        "rebuild": 2,        "name": "* Soaring Steam Plane"    },
-    {        "id": 1208,        "upgrademap": 0,        "rebuild": 1,        "name": "* Steam Warrior"    },
-    {        "id": 1209,        "upgrademap": 0,        "rebuild": 2,        "name": "Enchanted Car"    },
-    {        "id": 1210,        "upgrademap": 0,        "rebuild": 0,        "name": "* Shark Sub"    },
-    {        "id": 1211,        "upgrademap": 0,        "rebuild": 1,        "name": "* Monstrous Mouth"    },
-    {        "id": 1212,        "upgrademap": 0,        "rebuild": 2,        "name": "IMF Scrambler"    },
-    {        "id": 1213,        "upgrademap": 0,        "rebuild": 0,        "name": "* Shock Cycle"    },
-    {        "id": 1214,        "upgrademap": 0,        "rebuild": 1,        "name": "* IMF Covert Jet"    },
-    {        "id": 1215,        "upgrademap": 0,        "rebuild": 2,        "name": "IMF Sport Car"    },
-    {        "id": 1216,        "upgrademap": 0,        "rebuild": 0,        "name": "* IMF Tank"    },
-    {        "id": 1217,        "upgrademap": 0,        "rebuild": 1,        "name": "* IMF-Splorer"    },
-    {        "id": 1218,        "upgrademap": 0,        "rebuild": 0,        "name": "Sonic Speedster"    },
-    {        "id": 1219,        "upgrademap": 0,        "rebuild": 1,        "name": "* Sonic Speedster 2"    },
-    {        "id": 1220,        "upgrademap": 0,        "rebuild": 2,        "name": "* Sonic Speedster 3"    },
-    {        "id": 1221,        "upgrademap": 0,        "rebuild": 0,        "name": "The Tornado"    },
-    {        "id": 1222,        "upgrademap": 0,        "rebuild": 1,        "name": "* The Tornado 1"    },
-    {        "id": 1223,        "upgrademap": 0,        "rebuild": 2,        "name": "* The Tornado 2"    },
-    {        "id": 1224,        "upgrademap": 0,        "rebuild": 0,        "name": "K.I.T.T"  },
-    {        "id": 1225,        "upgrademap": 0,        "rebuild": 1,        "name": "* K.I.T.T. JET"     },
-    {        "id": 1226,        "upgrademap": 0,        "rebuild": 2,        "name": "* GOLIATH ARMORED SEMI"     },
-    {        "id": 1227,        "upgrademap": 0,        "rebuild": 0,        "name": "Police"   },
-    {        "id": 1228,        "upgrademap": 0,        "rebuild": 1,        "name": "* Hovercraft"     },
-    {        "id": 1229,        "upgrademap": 0,        "rebuild": 2,        "name": "* Plane"   },
-    {        "id": 1230,        "upgrademap": 0,        "rebuild": 0,        "name": "BIONIC STEED" },
-    {        "id": 1231,        "upgrademap": 0,        "rebuild": 1,        "name": "* BAT RAPTOR" },
-    {        "id": 1232,        "upgrademap": 0,        "rebuild": 2,        "name": "* ULTRA BAT" },
-    {        "id": 1233,        "upgrademap": 0,        "rebuild": 0,        "name": "BAT WING" },
-    {        "id": 1234,        "upgrademap": 0,        "rebuild": 1,        "name": "* BLACK THUNDER" },
-    {        "id": 1235,        "upgrademap": 0,        "rebuild": 2,        "name": "* BAT TANK" },
-    {        "id": 1236,        "upgrademap": 0,        "rebuild": 0,        "name": "Skeleton Organ"   },
-    {        "id": 1237,        "upgrademap": 0,        "rebuild": 1,        "name": "* Jukebox"    },
-    {        "id": 1238,        "upgrademap": 0,        "rebuild": 2,        "name": "* Skele-Turkey"   },
-    {        "id": 1239,        "upgrademap": 0,        "rebuild": 0,        "name": "Pirate Ship"  },
-    {        "id": 1240,        "upgrademap": 0,        "rebuild": 1,        "name": "* Fanged Fortune"     },
-    {        "id": 1241,        "upgrademap": 0,        "rebuild": 2,        "name": "* Inferno"    },
-    {        "id": 1242,        "upgrademap": 0,        "rebuild": 0,        "name": "Buckbeak"     },
-    {        "id": 1243,        "upgrademap": 0,        "rebuild": 1,        "name": "* Giant Owl"  },
-    {        "id": 1244,        "upgrademap": 0,        "rebuild": 2,        "name": "* Fierce Falcon"  },
-	{        "id": 1245,        "upgrademap": 0,        "rebuild": 0,        "name": "Saturn ' s Sandworm"  },
-	{        "id": 1246,        "upgrademap": 0,        "rebuild": 1,        "name": "* Spooky Spider"  },
-	{        "id": 1247,        "upgrademap": 0,        "rebuild": 2,        "name": "* Haunted Vacuum" },
-	{        "id": 1248,        "upgrademap": 0,        "rebuild": 0,        "name": "PPG Smartphone"       },
-	{        "id": 1249,        "upgrademap": 0,        "rebuild": 1,        "name": "* PPG Hotline"    },
-	{        "id": 1250,        "upgrademap": 0,        "rebuild": 2,        "name": "* Powerpuff Mag Net"  },
-	{        "id": 1253,        "upgrademap": 0,        "rebuild": 0,        "name": "Mega Blast Bot"       },
-	{        "id": 1251,        "upgrademap": 0,        "rebuild": 1,        "name": "* Ka Pow Cannon"  },
-	{        "id": 1252,        "upgrademap": 0,        "rebuild": 2,        "name": "* Slammin ' Guitar"   },
-	{        "id": 1254,        "upgrademap": 0,        "rebuild": 0,        "name": "Octi"             },
-	{        "id": 1255,        "upgrademap": 0,        "rebuild": 1,        "name": "* Super Skunk"    },
-	{        "id": 1256,        "upgrademap": 0,        "rebuild": 2,        "name": "* Sonic Squid"        },
-	{        "id": 1257,        "upgrademap": 0,        "rebuild": 0,        "name": "T Car"            },
-	{        "id": 1258,        "upgrademap": 0,        "rebuild": 1,        "name": "* T Forklift"     },
-	{        "id": 1259,        "upgrademap": 0,        "rebuild": 2,        "name": "* T Plane"            },
-	{        "id": 1260,        "upgrademap": 0,        "rebuild": 0,        "name": "Spellbook of Azarath"    },
-	{        "id": 1261,        "upgrademap": 0,        "rebuild": 1,        "name": "* Raven Wings"    },
-	{        "id": 1262,        "upgrademap": 0,        "rebuild": 2,        "name": "* Giant Hand"     },
-	{        "id": 1263,        "upgrademap": 0,        "rebuild": 0,        "name": "Titan Robot"         },
-	{        "id": 1264,        "upgrademap": 0,        "rebuild": 1,        "name": "* T Rocket"       },
-	{        "id": 1265,        "upgrademap": 0,        "rebuild": 2,        "name": "* Robot Retriever"   }  	
+module.exports = [
+    { "id": 1000, "upgrademap": 0, "rebuild": 0, "name": "Police Car", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1001, "upgrademap": 0, "rebuild": 1, "name": "* Aerial Squad Car", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1002, "upgrademap": 0, "rebuild": 2, "name": "* Missile Striker", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1003, "upgrademap": 0, "rebuild": 0, "name": "Gravity Sprinter", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1004, "upgrademap": 0, "rebuild": 1, "name": "* Street Shredder", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1005, "upgrademap": 0, "rebuild": 2, "name": "* Sky Clobberer", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1006, "upgrademap": 0, "rebuild": 0, "name": "Batmobile", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1007, "upgrademap": 0, "rebuild": 1, "name": "* Batblaster", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1008, "upgrademap": 0, "rebuild": 2, "name": "* Sonic Batray", "packType": "Starter", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1009, "upgrademap": 0, "rebuild": 0, "name": "Benny's Spaceship", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1010, "upgrademap": 0, "rebuild": 1, "name": "* Lasercraft", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1011, "upgrademap": 0, "rebuild": 2, "name": "* The Annihilator", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1012, "upgrademap": 0, "rebuild": 0, "name": "Delorean", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1013, "upgrademap": 0, "rebuild": 1, "name": "* Ultra Time Machine", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1014, "upgrademap": 0, "rebuild": 2, "name": "* Electric Time Machine", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1015, "upgrademap": 0, "rebuild": 0, "name": "Hoverboard", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1016, "upgrademap": 0, "rebuild": 1, "name": "* Cyclone Board", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1017, "upgrademap": 0, "rebuild": 2, "name": "* Ultimate Hoverjet", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1018, "upgrademap": 0, "rebuild": 0, "name": "Eagle interceptor", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1019, "upgrademap": 0, "rebuild": 1, "name": "* Eagle Skyblazer", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1020, "upgrademap": 0, "rebuild": 2, "name": "* Eagle Swoop Diver", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1021, "upgrademap": 0, "rebuild": 0, "name": "Cragger's Fireship", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1022, "upgrademap": 0, "rebuild": 1, "name": "* Croc Command Sub", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1023, "upgrademap": 0, "rebuild": 2, "name": "* Swamp Skimmer", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1024, "upgrademap": 0, "rebuild": 0, "name": "Cyber Guard", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1025, "upgrademap": 0, "rebuild": 1, "name": "* Cyber-Wrecker", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1026, "upgrademap": 0, "rebuild": 2, "name": "* Laser Robot Walker", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1027, "upgrademap": 0, "rebuild": 0, "name": "K9", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1028, "upgrademap": 0, "rebuild": 1, "name": "* K9 Ruff Rover", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1029, "upgrademap": 0, "rebuild": 2, "name": "* K9 Laser Cutter", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1030, "upgrademap": 0, "rebuild": 0, "name": "TARDIS", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1031, "upgrademap": 0, "rebuild": 1, "name": "* Laser-Pulse TARDIS", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1032, "upgrademap": 0, "rebuild": 2, "name": "* Energy-Burst TARDIS", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1033, "upgrademap": 0, "rebuild": 0, "name": "Emmet's Excavator", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1034, "upgrademap": 0, "rebuild": 1, "name": "* The Destroydozer", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1035, "upgrademap": 0, "rebuild": 2, "name": "* Destruct-o-Mech", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1036, "upgrademap": 0, "rebuild": 0, "name": "Winged Monkey", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1037, "upgrademap": 0, "rebuild": 1, "name": "* Battle Monkey", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1038, "upgrademap": 0, "rebuild": 2, "name": "* Commander Monkey", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1039, "upgrademap": 0, "rebuild": 0, "name": "Axe Chariot", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1040, "upgrademap": 0, "rebuild": 1, "name": "* Axe Hurler", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1041, "upgrademap": 0, "rebuild": 2, "name": "* Soaring Chariot", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1042, "upgrademap": 0, "rebuild": 0, "name": "Shelob the Great", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1043, "upgrademap": 0, "rebuild": 1, "name": "* 8-Legged Stalker", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1044, "upgrademap": 0, "rebuild": 2, "name": "* Poison Slinger", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1045, "upgrademap": 0, "rebuild": 0, "name": "Homer's Car", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1046, "upgrademap": 0, "rebuild": 1, "name": "* Homercraft", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1047, "upgrademap": 0, "rebuild": 2, "name": "* SubmaHomer", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1048, "upgrademap": 0, "rebuild": 0, "name": "Taunt-o-Vision", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1049, "upgrademap": 0, "rebuild": 1, "name": "* Blast Cam", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1050, "upgrademap": 0, "rebuild": 2, "name": "* The MechaHomer", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1051, "upgrademap": 0, "rebuild": 0, "name": "Velociraptor", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1052, "upgrademap": 0, "rebuild": 1, "name": "* Spike Attack Raptor", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1053, "upgrademap": 0, "rebuild": 2, "name": "* Venom Raptor", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1054, "upgrademap": 0, "rebuild": 0, "name": "Gyro Sphere", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1055, "upgrademap": 0, "rebuild": 1, "name": "* Sonic Beam Gyrosphere", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1056, "upgrademap": 0, "rebuild": 2, "name": "* Speed Boost Gyrosphere", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1057, "upgrademap": 0, "rebuild": 0, "name": "Clown Bike", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1058, "upgrademap": 0, "rebuild": 1, "name": "* Cannon Bike", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1059, "upgrademap": 0, "rebuild": 2, "name": "* Anti-Gravity Rocket Bike", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1060, "upgrademap": 0, "rebuild": 0, "name": "Mighty Lion Rider", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1061, "upgrademap": 0, "rebuild": 1, "name": "* Lion Blazer", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1062, "upgrademap": 0, "rebuild": 2, "name": "* Fire Lion", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1063, "upgrademap": 0, "rebuild": 0, "name": "Arrow Launcher", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1064, "upgrademap": 0, "rebuild": 1, "name": "* Seeking Shooter", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1065, "upgrademap": 0, "rebuild": 2, "name": "* Triple Ballista", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1066, "upgrademap": 0, "rebuild": 0, "name": "Mystery Machine", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1067, "upgrademap": 0, "rebuild": 1, "name": "* Mystery Tow", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1068, "upgrademap": 0, "rebuild": 2, "name": "* Mystery Monster", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1069, "upgrademap": 0, "rebuild": 0, "name": "Boulder Bomber", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1070, "upgrademap": 0, "rebuild": 1, "name": "* Boulder Blaster", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1071, "upgrademap": 0, "rebuild": 2, "name": "* Cyclone Jet", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1072, "upgrademap": 0, "rebuild": 0, "name": "Storm Fighter", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1073, "upgrademap": 0, "rebuild": 1, "name": "* Lightning Jet", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1074, "upgrademap": 0, "rebuild": 2, "name": "* Electro-Shooter", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1075, "upgrademap": 0, "rebuild": 0, "name": "Blade Bike", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1076, "upgrademap": 0, "rebuild": 1, "name": "* Flying Fire Bike", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1077, "upgrademap": 0, "rebuild": 2, "name": "* Blades of Fire", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1078, "upgrademap": 0, "rebuild": 0, "name": "Samurai Mech", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1079, "upgrademap": 0, "rebuild": 1, "name": "* Samurai Shooter", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1080, "upgrademap": 0, "rebuild": 2, "name": "* Soaring Samurai Mech", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1081, "upgrademap": 0, "rebuild": 0, "name": "Companion Cube", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1082, "upgrademap": 0, "rebuild": 1, "name": "* Laser Deflector", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1083, "upgrademap": 0, "rebuild": 2, "name": "* Gold Heart Emitter", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1084, "upgrademap": 0, "rebuild": 0, "name": "Sentry Turret", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1085, "upgrademap": 0, "rebuild": 1, "name": "* Turret Striker", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1086, "upgrademap": 0, "rebuild": 2, "name": "* Flying Turret Carrier", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1087, "upgrademap": 0, "rebuild": 0, "name": "Scooby Snack", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1088, "upgrademap": 0, "rebuild": 1, "name": "* Scooby Fire Snack", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1089, "upgrademap": 0, "rebuild": 2, "name": "* Scooby Ghost Snack", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1090, "upgrademap": 0, "rebuild": 0, "name": "Cloud Cukko Car", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1091, "upgrademap": 0, "rebuild": 1, "name": "* X-Stream Soaker", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1092, "upgrademap": 0, "rebuild": 2, "name": "* Rainbow Cannon", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1093, "upgrademap": 0, "rebuild": 0, "name": "Invisible Jet", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1094, "upgrademap": 0, "rebuild": 1, "name": "* Stealth Laser Shooter", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1095, "upgrademap": 0, "rebuild": 2, "name": "* Torpedo Bomber", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1096, "upgrademap": 0, "rebuild": 0, "name": "Ninja Copter", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1097, "upgrademap": 0, "rebuild": 1, "name": "* Glaciator", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1098, "upgrademap": 0, "rebuild": 2, "name": "* Freeze Fighter", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1099, "upgrademap": 0, "rebuild": 0, "name": "Traveling Time Train", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1100, "upgrademap": 0, "rebuild": 1, "name": "* (Traveling Time Train - rebuilt 1)", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1101, "upgrademap": 0, "rebuild": 2, "name": "* (Traveling Time Train - rebuilt 2)", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1102, "upgrademap": 0, "rebuild": 0, "name": "Aqua Watercraft", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1103, "upgrademap": 0, "rebuild": 1, "name": "* (Aqua Watercraft - rebuilt 1)", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1104, "upgrademap": 0, "rebuild": 2, "name": "* (Aqua Watercraft - rebuilt 2)", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1105, "upgrademap": 0, "rebuild": 0, "name": "Drill Driver", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1106, "upgrademap": 0, "rebuild": 1, "name": "* (Drill Driver - rebuilt 1)", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1107, "upgrademap": 0, "rebuild": 2, "name": "* (Drill Driver - rebuilt 2)", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1108, "upgrademap": 0, "rebuild": 0, "name": "Quinn-mobile", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1109, "upgrademap": 0, "rebuild": 1, "name": "* (Quinn-mobile - rebuilt 1)", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1110, "upgrademap": 0, "rebuild": 2, "name": "* (Quinn-mobile - rebuilt 2)", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1111, "upgrademap": 0, "rebuild": 0, "name": "The Jokers Chopper", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1112, "upgrademap": 0, "rebuild": 1, "name": "* (The Jokers Chopper - rebuilt 1)", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1113, "upgrademap": 0, "rebuild": 2, "name": "* (The Jokers Chopper - rebuilt 2)", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1114, "upgrademap": 0, "rebuild": 0, "name": "Hover Pod", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1115, "upgrademap": 0, "rebuild": 1, "name": "* (Hover Pod - rebuilt 1)", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1116, "upgrademap": 0, "rebuild": 2, "name": "* (Hover Pod - rebuilt 2)", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1117, "upgrademap": 0, "rebuild": 0, "name": "Dalek", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1118, "upgrademap": 0, "rebuild": 1, "name": "* (Dalek - rebuilt 1)", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1119, "upgrademap": 0, "rebuild": 2, "name": "* (Dalek - rebuilt 2)", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1120, "upgrademap": 0, "rebuild": 0, "name": "Ecto-1", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1121, "upgrademap": 0, "rebuild": 1, "name": "* (Ecto-1 - rebuilt 1)", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1122, "upgrademap": 0, "rebuild": 2, "name": "* (Ecto-1 - rebuilt 2)", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1123, "upgrademap": 0, "rebuild": 0, "name": "Ghost Trap", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1124, "upgrademap": 0, "rebuild": 1, "name": "* (Ghost Trap - rebuilt 1)", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1125, "upgrademap": 0, "rebuild": 2, "name": "* (Ghost Trap - rebuilt 2)", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1132, "upgrademap": 0, "rebuild": 0, "name": "Llyod's Golden Dragon", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1133, "upgrademap": 0, "rebuild": 1, "name": "* (Golden Dragon - rebuilt 1)", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1144, "upgrademap": 0, "rebuild": 2, "name": "* Mega Flight Dragon", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1155, "upgrademap": 0, "rebuild": 0, "name": "Flying White Dragon", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1156, "upgrademap": 0, "rebuild": 1, "name": "* Golden Fire Dragon", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1157, "upgrademap": 0, "rebuild": 2, "name": "* Ultra Destruction Dragon", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1158, "upgrademap": 0, "rebuild": 0, "name": "Arcade Machine", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1159, "upgrademap": 0, "rebuild": 1, "name": "* 8-bit Shooter", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1160, "upgrademap": 0, "rebuild": 2, "name": "* The Pixelator", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1161, "upgrademap": 0, "rebuild": 0, "name": "G-61555 Spy Hunter", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1162, "upgrademap": 0, "rebuild": 1, "name": "* The Interdiver", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1163, "upgrademap": 0, "rebuild": 2, "name": "* Aerial Spyhunter", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1164, "upgrademap": 0, "rebuild": 0, "name": "Slime Shooter", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1165, "upgrademap": 0, "rebuild": 1, "name": "* Slime Exploder", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1166, "upgrademap": 0, "rebuild": 2, "name": "* Slime Streamer", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1167, "upgrademap": 0, "rebuild": 0, "name": "Terror Dog", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1168, "upgrademap": 0, "rebuild": 1, "name": "* Terror Dog Destroyer", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1169, "upgrademap": 0, "rebuild": 2, "name": "* Soaring Terror Dog", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1170, "upgrademap": 0, "rebuild": 0, "name": "Ancient War Elephant", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1171, "upgrademap": 0, "rebuild": 1, "name": "* Cosmic Squid", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1172, "upgrademap": 0, "rebuild": 2, "name": "* Psychic Submarine", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1173, "upgrademap": 0, "rebuild": 0, "name": "BMO", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1174, "upgrademap": 0, "rebuild": 1, "name": "* DOGMO", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1175, "upgrademap": 0, "rebuild": 2, "name": "* SNAKEMO", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1176, "upgrademap": 0, "rebuild": 0, "name": "Jakemoblie", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1177, "upgrademap": 0, "rebuild": 1, "name": "* Snail Dude Jake", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1178, "upgrademap": 0, "rebuild": 2, "name": "* Hover Jake", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1179, "upgrademap": 0, "rebuild": 0, "name": "Lumpy Car", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1180, "upgrademap": 0, "rebuild": 1, "name": "* Lumpy Truck", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1181, "upgrademap": 0, "rebuild": 2, "name": "* Lumpy Land Whale", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1182, "upgrademap": 0, "rebuild": 0, "name": "Lunatic Amp", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1183, "upgrademap": 0, "rebuild": 1, "name": "* Lunatic Amp 2", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1184, "upgrademap": 0, "rebuild": 2, "name": "* Lunatic Amp 3", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1185, "upgrademap": 0, "rebuild": 0, "name": "B.A.s Van", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1186, "upgrademap": 0, "rebuild": 1, "name": "* Fool Smasher", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1187, "upgrademap": 0, "rebuild": 2, "name": "* The Pain Plane", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1188, "upgrademap": 0, "rebuild": 0, "name": "Phone Home", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1189, "upgrademap": 0, "rebuild": 1, "name": "* Phone Home 2", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1190, "upgrademap": 0, "rebuild": 2, "name": "* Phone Home 3", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1191, "upgrademap": 0, "rebuild": 0, "name": "Niffler", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1192, "upgrademap": 0, "rebuild": 1, "name": "* Niffler 2", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1193, "upgrademap": 0, "rebuild": 2, "name": "* Niffler 3", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1194, "upgrademap": 0, "rebuild": 0, "name": "Swooping Evil", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1195, "upgrademap": 0, "rebuild": 1, "name": "* Swooping Evil 2", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1196, "upgrademap": 0, "rebuild": 2, "name": "* Swooping Evil 3", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1197, "upgrademap": 0, "rebuild": 0, "name": "Ecto 1", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1198, "upgrademap": 0, "rebuild": 1, "name": "* Ectozer", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1199, "upgrademap": 0, "rebuild": 2, "name": "* Ecto1 Rebuild 2", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1200, "upgrademap": 0, "rebuild": 2, "name": "Flash 'n' Finish", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1201, "upgrademap": 0, "rebuild": 0, "name": "* Rampage Record Player", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1202, "upgrademap": 0, "rebuild": 1, "name": "* Stripe's Throne", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1203, "upgrademap": 0, "rebuild": 2, "name": "R.C. Racer", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1204, "upgrademap": 0, "rebuild": 0, "name": "* Gadet-o-matic", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1205, "upgrademap": 0, "rebuild": 1, "name": "* Scarlet Scorpion", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1206, "upgrademap": 0, "rebuild": 0, "name": "Hogwarts Express", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1207, "upgrademap": 0, "rebuild": 2, "name": "* Soaring Steam Plane", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1208, "upgrademap": 0, "rebuild": 1, "name": "* Steam Warrior", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1209, "upgrademap": 0, "rebuild": 2, "name": "Enchanted Car", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1210, "upgrademap": 0, "rebuild": 0, "name": "* Shark Sub", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1211, "upgrademap": 0, "rebuild": 1, "name": "* Monstrous Mouth", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1212, "upgrademap": 0, "rebuild": 2, "name": "IMF Scrambler", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1213, "upgrademap": 0, "rebuild": 0, "name": "* Shock Cycle", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1214, "upgrademap": 0, "rebuild": 1, "name": "* IMF Covert Jet", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1215, "upgrademap": 0, "rebuild": 2, "name": "IMF Sport Car", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1216, "upgrademap": 0, "rebuild": 0, "name": "* IMF Tank", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1217, "upgrademap": 0, "rebuild": 1, "name": "* IMF-Splorer", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1218, "upgrademap": 0, "rebuild": 0, "name": "Sonic Speedster", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1219, "upgrademap": 0, "rebuild": 1, "name": "* Sonic Speedster 2", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1220, "upgrademap": 0, "rebuild": 2, "name": "* Sonic Speedster 3", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1221, "upgrademap": 0, "rebuild": 0, "name": "The Tornado", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1222, "upgrademap": 0, "rebuild": 1, "name": "* The Tornado 1", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1223, "upgrademap": 0, "rebuild": 2, "name": "* The Tornado 2", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1224, "upgrademap": 0, "rebuild": 0, "name": "K.I.T.T", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1225, "upgrademap": 0, "rebuild": 1, "name": "* K.I.T.T. JET", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1226, "upgrademap": 0, "rebuild": 2, "name": "* GOLIATH ARMORED SEMI", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1227, "upgrademap": 0, "rebuild": 0, "name": "Police", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1228, "upgrademap": 0, "rebuild": 1, "name": "* Hovercraft", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1229, "upgrademap": 0, "rebuild": 2, "name": "* Plane", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1230, "upgrademap": 0, "rebuild": 0, "name": "BIONIC STEED", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1231, "upgrademap": 0, "rebuild": 1, "name": "* BAT RAPTOR", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1232, "upgrademap": 0, "rebuild": 2, "name": "* ULTRA BAT", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1233, "upgrademap": 0, "rebuild": 0, "name": "BAT WING", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1234, "upgrademap": 0, "rebuild": 1, "name": "* BLACK THUNDER", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1235, "upgrademap": 0, "rebuild": 2, "name": "* BAT TANK", "packType": "Story", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1236, "upgrademap": 0, "rebuild": 0, "name": "Skeleton Organ", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1237, "upgrademap": 0, "rebuild": 1, "name": "* Jukebox", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1238, "upgrademap": 0, "rebuild": 2, "name": "* Skele-Turkey", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1239, "upgrademap": 0, "rebuild": 0, "name": "Pirate Ship", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1240, "upgrademap": 0, "rebuild": 1, "name": "* Fanged Fortune", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1241, "upgrademap": 0, "rebuild": 2, "name": "* Inferno", "packType": "Level", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1242, "upgrademap": 0, "rebuild": 0, "name": "Buckbeak", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1243, "upgrademap": 0, "rebuild": 1, "name": "* Giant Owl", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1244, "upgrademap": 0, "rebuild": 2, "name": "* Fierce Falcon", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1245, "upgrademap": 0, "rebuild": 0, "name": "Saturn ' s Sandworm", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1246, "upgrademap": 0, "rebuild": 1, "name": "* Spooky Spider", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1247, "upgrademap": 0, "rebuild": 2, "name": "* Haunted Vacuum", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1248, "upgrademap": 0, "rebuild": 0, "name": "PPG Smartphone", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1249, "upgrademap": 0, "rebuild": 1, "name": "* PPG Hotline", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1250, "upgrademap": 0, "rebuild": 2, "name": "* Powerpuff Mag Net", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1253, "upgrademap": 0, "rebuild": 0, "name": "Mega Blast Bot", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1251, "upgrademap": 0, "rebuild": 1, "name": "* Ka Pow Cannon", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1252, "upgrademap": 0, "rebuild": 2, "name": "* Slammin ' Guitar", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1254, "upgrademap": 0, "rebuild": 0, "name": "Octi", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1255, "upgrademap": 0, "rebuild": 1, "name": "* Super Skunk", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1256, "upgrademap": 0, "rebuild": 2, "name": "* Sonic Squid", "packType": "Fun", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1257, "upgrademap": 0, "rebuild": 0, "name": "T Car", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1258, "upgrademap": 0, "rebuild": 1, "name": "* T Forklift", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1259, "upgrademap": 0, "rebuild": 2, "name": "* T Plane", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1260, "upgrademap": 0, "rebuild": 0, "name": "Spellbook of Azarath", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1261, "upgrademap": 0, "rebuild": 1, "name": "* Raven Wings", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1262, "upgrademap": 0, "rebuild": 2, "name": "* Giant Hand", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1263, "upgrademap": 0, "rebuild": 0, "name": "Titan Robot", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1264, "upgrademap": 0, "rebuild": 1, "name": "* T Rocket", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" },
+    { "id": 1265, "upgrademap": 0, "rebuild": 2, "name": "* Robot Retriever", "packType": "Team", "pendingStatus": "Waiting...", "lastProcessed": "-" }
 ]
 },{}],27:[function(require,module,exports){
 'use strict';
@@ -66163,6 +63221,37 @@ var MainController = function () {
 			});
 		}
 	}, {
+        key: 'getImagePath',
+           value: function getImagePath(id) {
+              // If no ID exists, return the placeholder immediately
+              if (!id) {
+                 return 'images/ph.png';
+              }
+
+              // Return the standard path
+              return 'images/' + id + '.png';
+           }
+     },{
+         key: 'getBorderClass',
+         value: function getBorderClass(id) {
+            // 1. Determine the pack
+            var pack = this.getPackType(id);
+
+            // 2. If no pack is found, it's a fallback
+            if (!pack) {
+               return 'is-fallback';
+            }
+
+            // 3. Return the class matching the pack
+            return 'pack-' + pack.toLowerCase();
+         }
+      }, {
+        key: 'getPackType',
+        value: function getPackType(id) {
+           var item = tokens.find(function(t) { return t.id === id; });
+           return item ? item.packType : '';
+        }
+     },	{
 		key: 'getName',
 		value: function getName(token) {
 			return this.getMap(token).name || '';

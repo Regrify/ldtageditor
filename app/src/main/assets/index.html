@@ -5,6 +5,21 @@
 		<title>LDTagEditor</title>
     <link rel="stylesheet" href="bootstrap.min.css">
 		<script src="app.js"></script>
+        <style>
+            /* Ensure the fallback has priority */
+            .is-fallback { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #FF0000, 0 0 0 10px #000; border-radius: 50%; }
+
+            .pack-starter { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #1E90FF, 0 0 0 10px #000; border-radius: 50%; }
+            .pack-fun { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #32CD32, 0 0 0 10px #000; border-radius: 50%; }
+            .pack-level { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #FFD700, 0 0 0 10px #000; border-radius: 50%; }
+            .pack-story { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #8A2BE2, 0 0 0 10px #000; border-radius: 50%; }
+            .pack-team { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #FF8C00, 0 0 0 10px #000; border-radius: 50%; }
+
+            .tag-image {
+                width: 150px; height: 150px; border-radius: 50%;
+                object-fit: cover; display: block; margin: 0 auto;
+            }
+        </style>
 	</head>
 	<body ng-controller="MainController as main" style="background: url('background.jpg') no-repeat fixed; background-size: 100% auto; background-color: #000;">
 		<div class="tokenEditor" ng-hide="main.dialog">
@@ -31,6 +46,18 @@
           <select ng-model="main.token.id" class="form-control" ng-options="char.id as char.name for char in main.charmap" ng-show="main.token.character"></select>
           <select ng-model="main.token.id" class="form-control" ng-options="token.id as token.name for token in main.tokenmap" ng-hide="main.token.character"></select>
         </div>
+          <div ng-if="main.token.id" style="margin-top: 20px; text-align: center;">
+              <img class="tag-image"
+                   style="margin: 0 auto;"
+                   ng-src="{{main.getImagePath(main.token.id)}}"
+                   onerror="this.src='images/ph.png'; this.className='tag-image is-fallback';"
+                   ng-class="main.getBorderClass(main.token.id)"
+                   alt="Tag Visual" />
+
+              <div style="margin-top: 10px; color: white;">
+                  <strong>Pack: {{main.getPackType(main.token.id)}}</strong>
+              </div>
+          </div>
         <div ng-hide="main.token.character">
           <label class="checkbox-inline" style="margin-top: 10px;">* = rebuild</label>
           <label class="checkbox-inline" style="margin-top: 10px;"><input type="checkbox" ng-model="main.token.maxUpgrades">Full Upgrades</label>
