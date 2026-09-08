@@ -1,5 +1,7 @@
 # Lego Dimensions Tag Editor v3
 
+- Removed the native Android Action bar as top bar as it was overlapping with other elements
+
 ## Planned features:
 - get information from the nfc tag like current character or vehicle in the memory
 - from that display the internal id for development

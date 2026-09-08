@@ -22,9 +22,34 @@
         </style>
 	</head>
 	<body ng-controller="MainController as main" style="background: url('background.jpg') no-repeat fixed; background-size: 100% auto; background-color: #000;">
+		<div id="tag-info-card" style="margin: 15px; padding: 12px; border-radius: 8px; background: #222; color: #fff; text-align: center;">
+			<span style="font-size: 12px; color: #aaa; text-transform: uppercase;">Scanned Tag</span>
+			<h3 id="detected-character-name" style="margin: 6px 0 2px 0;">{{main.detectedName || 'No Tag Detected'}}</h3>
+			<p id="detected-character-id" style="margin: 0; font-size: 13px; color: #888;">{{main.detectedId ? 'ID: ' + main.detectedId : 'Tap an NTAG213 tag to inspect'}}</p>
+			<div ng-if="main.debugInfo" style="margin-top: 8px; padding: 8px; background: #111; border-radius: 4px; font-size: 10px; color: #0f0; text-align: left; word-break: break-all; font-family: monospace;">
+				UID: {{main.debugInfo.uid}}<br>
+				P23: {{main.debugInfo.page23}}<br>
+				RAW: {{main.debugInfo.raw}}<br>
+				CHAR: {{main.debugInfo.character}}<br>
+				BUILD: {{main.debugInfo.build}}
+			</div>
+			<div ng-if="main.tagHistory.length" style="margin-top: 10px; text-align: left; max-height: 150px; overflow-y: auto;">
+				<h5 style="color: #aaa; text-transform: uppercase; font-size: 11px; margin: 0 0 6px 0;">History</h5>
+				<ul style="list-style: none; padding: 0; margin: 0;">
+					<li ng-repeat="entry in main.tagHistory track by $index" style="padding: 5px 0; border-bottom: 1px solid #333;">
+						<div style="color: #fff; font-weight: 600;">{{entry.name}}</div>
+						<div style="color: #888; font-size: 12px;">{{entry.time}} · ID: {{entry.id || '—'}}, UID: {{entry.uid}}</div>
+					</li>
+				</ul>
+			</div>
+		</div>
 		<div class="tokenEditor" ng-hide="main.dialog">
-     <div style="padding: 20px; font-size: 18px; font-weight: 800; text-align: center; width: 100%;"><img src="Legodimensions_logo.png" height="80" /> </div>
       <div style="padding: 20px;">
+      <div ng-if="!main.token.uid" style="text-align: center; color: #fff; padding: 40px 20px;">
+        <img src="nfc_tag.png" height="120" style="margin-bottom: 15px;" alt="NFC tag" />
+        <h4 style="margin: 0; font-weight: 600;">Place an NTAG213 tag on your phone</h4>
+        <p style="color: #aaa; font-size: 14px;">The app will automatically scan it</p>
+      </div>
       <div ng-if="main.token.uid" style="background-color: #fcfcfc; padding: 20px; border-radius: 10px; margin-bottom: 10px;">
         <div class="form-group">
           <label>UID:</label>
@@ -64,7 +89,7 @@
         </div>
       </div>
       <div>
-        <button class="btn btn-lg btn-primary" ng-click="main.readToken(main.token)" style="float: left;" ng-style="main.token.uid && {'width':'49%'} || {'width': '100%'}">Read</button>
+        <button class="btn btn-lg btn-primary" ng-click="main.readToken(main.token)" style="float: left;" ng-style="main.token.uid && {'width':'49%'} || {'width': '100%'}" ng-if="main.token.uid">Read</button>
          <button class="btn btn-lg btn-success" ng-click="main.writeToken(main.token)" style="float: left; width: 49%; margin-left: 2%;" ng-if="main.token.uid">Write</button>
       </div>
       </div>

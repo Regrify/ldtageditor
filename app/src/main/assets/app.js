@@ -795,14 +795,10 @@ Buffer.prototype.slice = function slice (start, end) {
   if (end < start) end = start
 
   var newBuf
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    newBuf = Buffer._augment(this.subarray(start, end))
-  } else {
-    var sliceLen = end - start
-    newBuf = new Buffer(sliceLen, undefined)
-    for (var i = 0; i < sliceLen; i++) {
-      newBuf[i] = this[i + start]
-    }
+  var sliceLen = end - start
+  newBuf = new Buffer(sliceLen, undefined)
+  for (var i = 0; i < sliceLen; i++) {
+    newBuf[i] = this[i + start]
   }
 
   if (newBuf.length) newBuf.parent = this.parent || this
@@ -63203,6 +63199,9 @@ var MainController = function () {
 		this.$scope = $scope;
 		this.api = API;
 		this.token = {};
+		this.detectedName = null;
+		this.detectedId = null;
+		this.tagHistory = [];
 		this.api.on('tagDetected', function () {
 			return $scope.$apply(function () {
 				return _this.tagDetected();
@@ -63277,31 +63276,91 @@ var MainController = function () {
 			this.dialog = 'write';
 		}
 	}, {
+		key: 'identifyTag',
+		value: function identifyTag() {
+			var uid = this.api.readTag(0x00).toString('hex').replace(/^(.{6})..(.{8}).*$/, '$1$2');
+			var buf = this.api.readTag(0x23);
+			console.log('reading', uid, buf);
+			var pagei = function pagei(p) {
+				return (p - 0x23) * 4;
+			};
+			var page = function page(p, c) {
+				return buf.slice(pagei(p), pagei(p + (c || 1)));
+			};
+			var t = {};
+			t.uid = uid.toUpperCase();
+			t.character = !buf.readUInt32LE(pagei(0x26));
+			t.debugUid = uid;
+			t.debugPage23 = buf.toString('hex');
+			var raw = page(0x24, 2);
+			var isBlank = true;
+			for (var i = 0; i < raw.length; i++) {
+				if (raw[i] !== 0) {
+					isBlank = false;
+					break;
+				}
+			}
+			t.debugRaw = raw.toString('hex');
+			t.debugBuild = 'BUILD-DEBUG-002';
+			if (isBlank) {
+				t.id = 0;
+			} else if (t.character) {
+				var cc = new ld.CharCrypto();
+				t.id = cc.decrypt(t.uid, raw);
+			} else {
+				t.id = page(0x24).readUInt32LE(0);
+			}
+			console.log(t);
+			return t;
+		}
+	}, {
+		key: 'updateTagInfo',
+		value: function updateTagInfo(t) {
+			if (!t) {
+				this.detectedName = 'Read Error';
+				this.detectedId = null;
+				this.debugInfo = null;
+				return;
+			}
+			this.debugInfo = {
+				uid: t.debugUid || t.uid,
+				page23: t.debugPage23 || '',
+				raw: t.debugRaw || '',
+				character: t.character,
+				build: t.debugBuild || 'unknown'
+			};
+			var item = tokens.find(function (cm) {
+				return cm.id == t.id;
+			});
+			if (t.id === 0 || t.id === undefined || t.id === null) {
+				this.detectedName = 'Empty Tag';
+				this.detectedId = null;
+			} else if (item) {
+				this.detectedName = item.name;
+				this.detectedId = t.id;
+			} else {
+				this.detectedName = 'Unknown Tag';
+				this.detectedId = t.id;
+			}
+
+			if (!this.tagHistory.length || this.tagHistory[0].uid !== t.uid) {
+				this.tagHistory.unshift({
+					name: this.detectedName,
+					id: this.detectedId,
+					uid: t.uid,
+					time: new Date().toLocaleTimeString()
+				});
+				if (this.tagHistory.length > 20) this.tagHistory.pop();
+			}
+		}
+	}, {
 		key: 'tagDetected',
 		value: function tagDetected() {
 			if (this.dialog == 'read') {
-				var uid = this.api.readTag(0x00).toString('hex').replace(/^(.{6})..(.{8}).*$/, '$1$2');
-				var buf = this.api.readTag(0x23);
-				console.log('reading', uid, buf);
-				var pagei = function pagei(p) {
-					return (p - 0x23) * 4;
-				};
-				var page = function page(p, c) {
-					return buf.slice(pagei(p), pagei(p + (c || 1)));
-				};
-				var t = {};
-				t.uid = uid.toUpperCase();
-				t.character = !buf.readUInt32LE(pagei(0x26));
-				if (t.character) {
-					var cc = new ld.CharCrypto();
-					t.id = cc.decrypt(t.uid, page(0x24, 2));
-				} else {
-					t.id = page(0x24).readUInt32LE(0);
-				}
-				console.log(t);
+				var t = this.identifyTag();
 				this.token = t;
-			}
-			if (this.dialog == 'write') {
+				this.updateTagInfo(t);
+			} else if (this.dialog == 'write') {
 				var cc = new ld.CharCrypto();
 				var uid = this.api.readTag(0x00).toString('hex').replace(/^(.{6})..(.{8}).*$/, '$1$2');
 				var t = this.token;
@@ -63324,7 +63383,11 @@ var MainController = function () {
 				if (this.tagType == 'ntag213') this.api.writeTag(0x2B, ld.PWDGen(uid));
 				if (this.tagType == 'ntag215') this.api.writeTag(0x85, ld.PWDGen(uid));
 				if (this.tagType == 'ntag216') this.api.writeTag(0xE5, ld.PWDGen(uid));
-        this.dialog = null;
+				this.dialog = null;
+			} else {
+				var t = this.identifyTag();
+				this.token = t;
+				this.updateTagInfo(t);
 			}
 			this.dialog = null;
 		}

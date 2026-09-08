@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
             this.nfc = NfcAdapter.getDefaultAdapter(this);
             this.webView = (WebView) findViewById(R.id.webView);
             this.webView.getSettings().setJavaScriptEnabled(true);
+            this.webView.getSettings().setDomStorageEnabled(true);
             this.webView.getSettings().setAllowFileAccess(true);
             this.webView.getSettings().setAllowFileAccessFromFileURLs(true);
             this.webView.getSettings().setAllowUniversalAccessFromFileURLs(true);
