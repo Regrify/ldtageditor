@@ -19,9 +19,33 @@
                 width: 150px; height: 150px; border-radius: 50%;
                 object-fit: cover; display: block; margin: 0 auto;
             }
+
+            .main-content {
+                display: block;
+            }
+
+            @media screen and (orientation: landscape) {
+                .main-content {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: stretch;
+                    height: 100vh;
+                    padding: 0;
+                }
+                .main-content > #tag-info-card,
+                .main-content > .tokenEditor {
+                    flex: 1;
+                    width: 50%;
+                    margin: 15px;
+                    box-sizing: border-box;
+                    max-height: calc(100vh - 30px);
+                    overflow-y: auto;
+                }
+            }
         </style>
 	</head>
 	<body ng-controller="MainController as main" style="background: url('background.jpg') no-repeat fixed; background-size: 100% auto; background-color: #000;">
+		<div class="main-content">
 		<div id="tag-info-card" style="margin: 15px; padding: 12px; border-radius: 8px; background: #222; color: #fff; text-align: center;">
 			<span style="font-size: 12px; color: #aaa; text-transform: uppercase;">Scanned Tag</span>
 			<h3 id="detected-character-name" style="margin: 6px 0 2px 0;">{{main.detectedName || 'No Tag Detected'}}</h3>
@@ -93,6 +117,7 @@
          <button class="btn btn-lg btn-success" ng-click="main.writeToken(main.token)" style="float: left; width: 49%; margin-left: 2%;" ng-if="main.token.uid">Write</button>
       </div>
       </div>
+		</div>
 		</div>
 		<div class="overlay" ng-show="main.dialog" style="text-align: center; color: #fff;">
       <div style="padding: 20px; font-size: 18px; font-weight: 800; text-align: center; width: 100%;"><img src="nfc_tag.png" height="200" /> </div>
