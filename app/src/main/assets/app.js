@@ -63403,6 +63403,12 @@ var MainController = function () {
 			return m ? m.world || '' : '';
 		}
 	}, {
+		key: 'getWorldById',
+		value: function getWorldById(id) {
+			var m = tokens.find(function (t) { return t.id === id; });
+			return m ? m.world || '' : '';
+		}
+	}, {
 		key: 'selectItem',
 		value: function selectItem(item) {
 			this.token = {

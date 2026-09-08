@@ -27,44 +27,59 @@
 
             @media screen and (orientation: landscape) {
                 .main-content {
-                    display: flex;
-                    flex-direction: row;
-                    align-items: stretch;
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    grid-template-rows: auto minmax(0, 1fr);
                     height: 100vh;
-                    padding: 0;
                 }
-                .main-content > #tag-info-card,
-                .main-content > .tokenEditor {
-                    flex: 1;
-                    width: 50%;
-                    margin: 15px;
-                    box-sizing: border-box;
-                    max-height: calc(100vh - 30px);
+                .main-content > .char-panel {
+                    grid-column: 1;
+                    grid-row: 1;
+                }
+                .main-content > .picker-panel {
+                    grid-column: 2;
+                    grid-row: 1 / span 2;
                     overflow-y: auto;
+                    min-height: 0;
+                }
+                .main-content > #tag-info-card {
+                    grid-column: 1;
+                    grid-row: 2;
+                    overflow-y: auto;
+                    min-height: 0;
                 }
             }
         </style>
 	</head>
 	<body ng-controller="MainController as main" style="background: url('ld_background.png') no-repeat fixed; background-size: auto 100%; background-position: center center; background-color: #000;">
 		<div class="main-content">
-		<div class="tokenEditor" ng-hide="main.dialog">
-      <div style="padding: 20px;">
+		<div class="char-panel" ng-hide="main.dialog">
+      <div style="padding: 15px;">
 
-      <img ng-if="main.detectedId" class="tag-image"
-           style="margin: 0 auto 15px auto;"
-           ng-src="{{main.getImagePath(main.detectedId)}}"
-           onerror="this.src='images/ph.png'; this.className='tag-image is-fallback';"
-           ng-class="main.getBorderClass(main.detectedId)"
-           alt="Tag Visual" />
-
-      <div style="margin-bottom: 15px;">
-        <label>Tag Type:</label><br>
-        <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag213">NTAG213</label>
-        <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag215">NTAG215 <span style="color:red;font-weight:bold;">EXP</span></label>
-        <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag216">NTAG216 <span style="color:red;font-weight:bold;">EXP</span></label>
+      <div style="background-color: #fcfcfc; padding: 15px; border-radius: 10px; text-align: center;">
+        <img ng-if="main.detectedId" class="tag-image"
+             style="margin: 0 auto 10px auto;"
+             ng-src="{{main.getImagePath(main.detectedId)}}"
+             onerror="this.src='images/ph.png'; this.className='tag-image is-fallback';"
+             ng-class="main.getBorderClass(main.detectedId)"
+             alt="Tag Visual" />
+        <h4 style="margin: 0 0 2px 0; color: #333;">{{main.detectedName || 'No Tag Detected'}}</h4>
+        <p style="color: #888; font-size: 13px; margin: 0 0 10px 0;">
+          {{main.detectedId ? 'ID: ' + main.detectedId : 'Approach a tag to load it'}}<br>
+          <span ng-if="main.detectedId">{{main.getWorldById(main.detectedId)}}<span ng-if="main.getPackType(main.detectedId)"> · {{main.getPackType(main.detectedId)}} Pack</span></span>
+        </p>
+        <div style="text-align: left; border-top: 1px solid #ddd; padding-top: 10px;">
+          <label>Tag Type:</label><br>
+          <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag213">NTAG213</label>
+          <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag215">NTAG215 <span style="color:red;font-weight:bold;">EXP</span></label>
+          <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag216">NTAG216 <span style="color:red;font-weight:bold;">EXP</span></label>
+        </div>
       </div>
 
-      <p style="text-align: center; color: #888; font-size: 14px; margin-bottom: 15px;">Approach a tag to load it</p>
+      </div>
+		</div>
+		<div class="picker-panel" ng-hide="main.dialog">
+      <div style="padding: 15px;">
 
       <!-- Combined item picker grouped by franchise -->
       <div style="background-color: #fcfcfc; padding: 15px; border-radius: 10px;">
