@@ -63273,6 +63273,16 @@ tokenmap.forEach(function (t) {
 	t.world = vehicleWorldMap[t.id] || 'Other';
 });
 
+var customTokens = [];
+try {
+	customTokens = JSON.parse(localStorage.getItem('ldtageditor.customTokens') || '[]');
+} catch (e) {
+	customTokens = [];
+}
+customTokens.forEach(function (t) {
+	tokens.push(t);
+});
+
 function normalizeWorld(w) {
 	var key = (w || 'Other').trim();
 	var lower = key.toLowerCase();
@@ -63321,6 +63331,9 @@ var MainController = function () {
 		this.franchiseGroups = buildFranchiseGroups();
 		this.settings = { showCustomTag: false, showDebugInfo: false };
 		this.showSettings = false;
+		this.customDialog = false;
+		this.customTag = { id: '', name: '', world: '' };
+		this.customTagError = '';
 
 		try {
 			var saved = JSON.parse(localStorage.getItem('ldtageditor.state') || '{}');
@@ -63370,9 +63383,60 @@ var MainController = function () {
 			this.showSettings = false;
 		}
 	}, {
-		key: 'createCustomTag',
-		value: function createCustomTag() {
-			// Placeholder for custom tag creation
+		key: 'openCustomTagDialog',
+		value: function openCustomTagDialog() {
+			this.customTag = { id: '', name: '', world: '' };
+			this.customTagError = '';
+			this.customDialog = true;
+		}
+	}, {
+		key: 'closeCustomTagDialog',
+		value: function closeCustomTagDialog() {
+			this.customDialog = false;
+		}
+	}, {
+		key: 'submitCustomTag',
+		value: function submitCustomTag() {
+			var idNum = parseInt(this.customTag.id, 10);
+			var name = (this.customTag.name || '').trim();
+			var world = (this.customTag.world || '').trim();
+
+			if (this.customTag.id === '' || this.customTag.id === null || this.customTag.id === undefined || isNaN(idNum)) {
+				this.customTagError = 'Please enter a valid numeric ID.';
+				return;
+			}
+			if (!name) {
+				this.customTagError = 'Please enter a name.';
+				return;
+			}
+			if (!world) {
+				this.customTagError = 'Please choose a franchise.';
+				return;
+			}
+			if (tokens.some(function (t) { return t.id === idNum; })) {
+				this.customTagError = 'ID ' + idNum + ' is already in use.';
+				return;
+			}
+
+			var item = {
+				id: idNum,
+				name: name,
+				world: world,
+				packType: 'Custom',
+				pendingStatus: 'Waiting...',
+				lastProcessed: '-'
+			};
+
+			tokens.push(item);
+			customTokens.push(item);
+			try {
+				localStorage.setItem('ldtageditor.customTokens', JSON.stringify(customTokens));
+			} catch (e) {}
+
+			this.franchiseGroups = buildFranchiseGroups();
+			this.customDialog = false;
+			this.customTagError = '';
+			this.selectItem(item);
 		}
 	}, {
 		key: 'getMap',

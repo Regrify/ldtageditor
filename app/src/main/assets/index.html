@@ -15,6 +15,7 @@
             .pack-story { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #8A2BE2, 0 0 0 6px #000; border-radius: 50%; }
             .pack-team { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #FF8C00, 0 0 0 6px #000; border-radius: 50%; }
             .pack-unreleased { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #808080, 0 0 0 6px #000; border-radius: 50%; }
+            .pack-custom { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #E91E63, 0 0 0 6px #000; border-radius: 50%; }
 
             .tag-image {
                 width: 150px; height: 150px; border-radius: 50%;
@@ -41,6 +42,9 @@
                     grid-row: 1 / span 2;
                     overflow-y: auto;
                     min-height: 0;
+                }
+                .picker-panel .picker-list {
+                    max-height: none;
                 }
                 .main-content > #tag-info-card {
                     grid-column: 1;
@@ -238,7 +242,7 @@
             </label>
           </div>
         </div>
-        <button ng-if="main.settings.showCustomTag" class="btn btn-lg btn-primary" ng-click="main.createCustomTag()" style="width: 100%; margin-top: 15px;">Create Custom Tag</button>
+        <button ng-if="main.settings.showCustomTag" class="btn btn-lg btn-primary" ng-click="main.openCustomTagDialog()" style="width: 100%; margin-top: 15px;">Create Custom Tag</button>
       </div>
 
       </div>
@@ -250,7 +254,7 @@
       <div style="background-color: #fcfcfc; padding: 15px; border-radius: 10px;">
         <input type="text" class="form-control" placeholder="Search..." ng-model="main.pickerSearch" style="margin-bottom: 10px;">
 
-        <div style="max-height: 50vh; overflow-y: auto;">
+        <div class="picker-list" style="max-height: 50vh; overflow-y: auto;">
           <div ng-repeat="group in main.franchiseGroups" ng-if="(group.items | filter:main.pickerSearch).length">
             <h5 style="color: #888; text-transform: uppercase; font-size: 11px; margin: 12px 0 6px 0; border-bottom: 1px solid #ddd; padding-bottom: 4px;">{{group.world}}</h5>
             <div style="display: flex; flex-wrap: wrap;">
@@ -311,6 +315,31 @@
 			<div style="padding: 20px; font-size: 18px; font-weight: 800;">Please place phone on token</div>
 			<button class="btn btn-danger" ng-click="main.cancel()">Cancel</button>
 		</div>
+		<div class="settings-overlay" ng-if="main.customDialog">
+			<div class="settings-panel">
+				<div class="settings-header">
+					<h3>Create Custom Tag</h3>
+					<button class="settings-close-x" ng-click="main.closeCustomTagDialog()">&times;</button>
+				</div>
+				<div class="form-group">
+					<label style="color: #fff;">ID</label>
+					<input type="number" class="form-control" ng-model="main.customTag.id" placeholder="e.g. 80">
+				</div>
+				<div class="form-group">
+					<label style="color: #fff;">Name</label>
+					<input type="text" class="form-control" ng-model="main.customTag.name" placeholder="e.g. Test 17">
+				</div>
+				<div class="form-group">
+					<label style="color: #fff;">Franchise</label>
+					<select class="form-control" ng-model="main.customTag.world">
+						<option value="" disabled selected>Select franchise...</option>
+						<option ng-repeat="group in main.franchiseGroups" value="{{group.world}}">{{group.world}}</option>
+					</select>
+				</div>
+				<div ng-if="main.customTagError" style="color: #ff6b6b; font-size: 13px; margin-bottom: 10px;">{{main.customTagError}}</div>
+				<button class="btn btn-lg btn-primary" ng-click="main.submitCustomTag()" style="width: 100%;">Create</button>
+			</div>
+		</div>
 		<div class="settings-overlay" ng-if="main.showSettings">
 			<div class="settings-panel">
 				<div class="settings-header">
@@ -333,7 +362,7 @@
 				</div>
 			</div>
 		</div>
-		<button class="fab" ng-hide="main.dialog || main.showSettings" ng-click="main.openSettings()">
+		<button class="fab" ng-hide="main.dialog || main.showSettings || main.customDialog" ng-click="main.openSettings()">
 			<img src="ld_settings.png" alt="Settings">
 		</button>
 	</body>
