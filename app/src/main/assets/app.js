@@ -63280,6 +63280,7 @@ try {
 	customTokens = [];
 }
 customTokens.forEach(function (t) {
+	t.custom = true;
 	tokens.push(t);
 });
 
@@ -63334,6 +63335,7 @@ var MainController = function () {
 		this.customDialog = false;
 		this.customTag = { id: '', name: '', world: '' };
 		this.customTagError = '';
+		this.customEditId = null;
 
 		try {
 			var saved = JSON.parse(localStorage.getItem('ldtageditor.state') || '{}');
@@ -63385,14 +63387,51 @@ var MainController = function () {
 	}, {
 		key: 'openCustomTagDialog',
 		value: function openCustomTagDialog() {
-			this.customTag = { id: '', name: '', world: '' };
+			this.customEditId = null;
+			this.customTag = { id: '', name: '', world: 'Unreleased' };
 			this.customTagError = '';
 			this.customDialog = true;
+		}
+	}, {
+		key: 'editCustomTag',
+		value: function editCustomTag(item) {
+			this.customEditId = item.id;
+			this.customTag = { id: item.id, name: item.name, world: item.world };
+			this.customTagError = '';
+			this.customDialog = true;
+		}
+	}, {
+		key: 'deleteCustomTag',
+		value: function deleteCustomTag(item) {
+			if (!confirm('Delete "' + item.name + '"?')) return;
+
+			var idx = tokens.indexOf(item);
+			if (idx !== -1) tokens.splice(idx, 1);
+			var cidx = customTokens.findIndex(function (t) { return t.id === item.id; });
+			if (cidx !== -1) customTokens.splice(cidx, 1);
+
+			try {
+				localStorage.setItem('ldtageditor.customTokens', JSON.stringify(customTokens));
+			} catch (e) {}
+
+			this.franchiseGroups = buildFranchiseGroups();
+			if (this.customEditId === item.id) {
+				this.customDialog = false;
+				this.customEditId = null;
+			}
+		}
+	}, {
+		key: 'deleteCurrentCustomTag',
+		value: function deleteCurrentCustomTag() {
+			var self = this;
+			var item = tokens.find(function (t) { return t.id === self.customEditId; });
+			if (item) this.deleteCustomTag(item);
 		}
 	}, {
 		key: 'closeCustomTagDialog',
 		value: function closeCustomTagDialog() {
 			this.customDialog = false;
+			this.customEditId = null;
 		}
 	}, {
 		key: 'submitCustomTag',
@@ -63400,6 +63439,7 @@ var MainController = function () {
 			var idNum = parseInt(this.customTag.id, 10);
 			var name = (this.customTag.name || '').trim();
 			var world = (this.customTag.world || '').trim();
+			var editingId = this.customEditId;
 
 			if (this.customTag.id === '' || this.customTag.id === null || this.customTag.id === undefined || isNaN(idNum)) {
 				this.customTagError = 'Please enter a valid numeric ID.';
@@ -63413,22 +63453,35 @@ var MainController = function () {
 				this.customTagError = 'Please choose a franchise.';
 				return;
 			}
-			if (tokens.some(function (t) { return t.id === idNum; })) {
+			var duplicate = tokens.some(function (t) {
+				return t.id === idNum && t.id !== editingId;
+			});
+			if (duplicate) {
 				this.customTagError = 'ID ' + idNum + ' is already in use.';
 				return;
 			}
 
-			var item = {
-				id: idNum,
-				name: name,
-				world: world,
-				packType: 'Custom',
-				pendingStatus: 'Waiting...',
-				lastProcessed: '-'
-			};
+			if (editingId !== null && editingId !== undefined) {
+				var existing = tokens.find(function (t) { return t.id === editingId; });
+				if (existing) {
+					existing.id = idNum;
+					existing.name = name;
+					existing.world = world;
+				}
+			} else {
+				var item = {
+					id: idNum,
+					name: name,
+					world: world,
+					packType: 'Custom',
+					custom: true,
+					pendingStatus: 'Waiting...',
+					lastProcessed: '-'
+				};
+				tokens.push(item);
+				customTokens.push(item);
+			}
 
-			tokens.push(item);
-			customTokens.push(item);
 			try {
 				localStorage.setItem('ldtageditor.customTokens', JSON.stringify(customTokens));
 			} catch (e) {}
@@ -63436,7 +63489,7 @@ var MainController = function () {
 			this.franchiseGroups = buildFranchiseGroups();
 			this.customDialog = false;
 			this.customTagError = '';
-			this.selectItem(item);
+			this.customEditId = null;
 		}
 	}, {
 		key: 'getMap',
@@ -63451,6 +63504,12 @@ var MainController = function () {
               // If no ID exists, return the placeholder immediately
               if (!id) {
                  return 'images/ph.png';
+              }
+
+              // Custom tags use the dedicated custom icon
+              var item = tokens.find(function (t) { return t.id == id; });
+              if (item && item.custom) {
+                 return 'images/custom.png';
               }
 
               // Return the standard path

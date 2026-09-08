@@ -259,15 +259,20 @@
             <h5 style="color: #888; text-transform: uppercase; font-size: 11px; margin: 12px 0 6px 0; border-bottom: 1px solid #ddd; padding-bottom: 4px;">{{group.world}}</h5>
             <div style="display: flex; flex-wrap: wrap;">
               <div ng-repeat="item in group.items | filter:main.pickerSearch track by item.id"
-                   ng-click="main.selectItem(item)"
-                   style="width: 33.33%; text-align: center; padding: 8px; box-sizing: border-box; cursor: pointer;">
-                <img src="{{main.getImagePath(item.id)}}"
-                     onerror="this.src='images/ph.png'; this.className='pack-thumb is-fallback';"
-                     class="pack-thumb"
-                     ng-class="main.getBorderClass(item.id)"
-                     style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;">
-                <div style="font-size: 11px; margin-top: 4px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.name}}</div>
-                <div style="font-size: 10px; color: #999;">#{{item.id}}</div>
+                   style="width: 33.33%; text-align: center; padding: 8px; box-sizing: border-box;">
+                <div ng-click="main.selectItem(item)" style="cursor: pointer;">
+                  <img src="{{main.getImagePath(item.id)}}"
+                       onerror="this.src='images/ph.png'; this.className='pack-thumb is-fallback';"
+                       class="pack-thumb"
+                       ng-class="main.getBorderClass(item.id)"
+                       style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;">
+                  <div style="font-size: 11px; margin-top: 4px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.name}}</div>
+                  <div style="font-size: 10px; color: #999;">#{{item.id}}<span ng-if="item.custom" style="color: #E91E63; font-weight: bold;"> &middot; Custom</span></div>
+                </div>
+                <div ng-if="item.custom" style="display: flex; justify-content: center; gap: 6px; margin-top: 4px;">
+                  <button ng-click="main.editCustomTag(item)" style="border: none; background: #eee; border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;">Edit</button>
+                  <button ng-click="main.deleteCustomTag(item)" style="border: none; background: #fdd; color: #c00; border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;">Delete</button>
+                </div>
               </div>
             </div>
           </div>
@@ -318,7 +323,7 @@
 		<div class="settings-overlay" ng-if="main.customDialog">
 			<div class="settings-panel">
 				<div class="settings-header">
-					<h3>Create Custom Tag</h3>
+					<h3>{{main.customEditId !== null ? 'Edit Custom Tag' : 'Create Custom Tag'}}</h3>
 					<button class="settings-close-x" ng-click="main.closeCustomTagDialog()">&times;</button>
 				</div>
 				<div class="form-group">
@@ -332,12 +337,16 @@
 				<div class="form-group">
 					<label style="color: #fff;">Franchise</label>
 					<select class="form-control" ng-model="main.customTag.world">
-						<option value="" disabled selected>Select franchise...</option>
-						<option ng-repeat="group in main.franchiseGroups" value="{{group.world}}">{{group.world}}</option>
+						<option value="" disabled>Select franchise...</option>
+						<option value="Unreleased" selected>Unreleased</option>
+						<option ng-repeat="group in main.franchiseGroups | filter:{world:'!Unreleased'}" value="{{group.world}}">{{group.world}}</option>
 					</select>
 				</div>
 				<div ng-if="main.customTagError" style="color: #ff6b6b; font-size: 13px; margin-bottom: 10px;">{{main.customTagError}}</div>
-				<button class="btn btn-lg btn-primary" ng-click="main.submitCustomTag()" style="width: 100%;">Create</button>
+				<div style="display: flex; gap: 8px;">
+					<button ng-if="main.customEditId !== null" class="btn btn-lg btn-danger" ng-click="main.deleteCurrentCustomTag()" style="flex: 1;">Delete</button>
+					<button class="btn btn-lg btn-primary" ng-click="main.submitCustomTag()" style="flex: 2;">{{main.customEditId !== null ? 'Save' : 'Create'}}</button>
+				</div>
 			</div>
 		</div>
 		<div class="settings-overlay" ng-if="main.showSettings">
