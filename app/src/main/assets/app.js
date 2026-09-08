@@ -63187,6 +63187,118 @@ tokenmap.forEach(function (i) {
 	return tokens.push(i);
 });
 
+var vehicleWorldMap = {
+	1000: 'The LEGO Movie', 1001: 'The LEGO Movie', 1002: 'The LEGO Movie',
+	1003: 'The Simpsons', 1004: 'The Simpsons', 1005: 'The Simpsons',
+	1006: 'DC Comics', 1007: 'DC Comics', 1008: 'DC Comics',
+	1009: 'The LEGO Movie', 1010: 'The LEGO Movie', 1011: 'The LEGO Movie',
+	1012: 'Back to the Future', 1013: 'Back to the Future', 1014: 'Back to the Future',
+	1015: 'Back to the Future', 1016: 'Back to the Future', 1017: 'Back to the Future',
+	1018: 'Legends of Chima', 1019: 'Legends of Chima', 1020: 'Legends of Chima',
+	1021: 'Legends of Chima', 1022: 'Legends of Chima', 1023: 'Legends of Chima',
+	1024: 'DC Comics', 1025: 'DC Comics', 1026: 'DC Comics',
+	1027: 'Doctor Who', 1028: 'Doctor Who', 1029: 'Doctor Who',
+	1030: 'Doctor Who', 1031: 'Doctor Who', 1032: 'Doctor Who',
+	1033: 'The LEGO Movie', 1034: 'The LEGO Movie', 1035: 'The LEGO Movie',
+	1036: 'Wizard of Oz', 1037: 'Wizard of Oz', 1038: 'Wizard of Oz',
+	1039: 'Lord of the Rings', 1040: 'Lord of the Rings', 1041: 'Lord of the Rings',
+	1042: 'Lord of the Rings', 1043: 'Lord of the Rings', 1044: 'Lord of the Rings',
+	1045: 'The Simpsons', 1046: 'The Simpsons', 1047: 'The Simpsons',
+	1048: 'The Simpsons', 1049: 'The Simpsons', 1050: 'The Simpsons',
+	1051: 'Jurrasic Park', 1052: 'Jurrasic Park', 1053: 'Jurrasic Park',
+	1054: 'Jurrasic Park', 1055: 'Jurrasic Park', 1056: 'Jurrasic Park',
+	1057: 'The Simpsons', 1058: 'The Simpsons', 1059: 'The Simpsons',
+	1060: 'Legends of Chima', 1061: 'Legends of Chima', 1062: 'Legends of Chima',
+	1063: 'Lord of the Rings', 1064: 'Lord of the Rings', 1065: 'Lord of the Rings',
+	1066: 'Scooby-Doo', 1067: 'Scooby-Doo', 1068: 'Scooby-Doo',
+	1069: 'Ninjago', 1070: 'Ninjago', 1071: 'Ninjago',
+	1072: 'Ninjago', 1073: 'Ninjago', 1074: 'Ninjago',
+	1075: 'Ninjago', 1076: 'Ninjago', 1077: 'Ninjago',
+	1078: 'Ninjago', 1079: 'Ninjago', 1080: 'Ninjago',
+	1081: 'Portal 2', 1082: 'Portal 2', 1083: 'Portal 2',
+	1084: 'Portal 2', 1085: 'Portal 2', 1086: 'Portal 2',
+	1087: 'Scooby-Doo', 1088: 'Scooby-Doo', 1089: 'Scooby-Doo',
+	1090: 'The LEGO Movie', 1091: 'The LEGO Movie', 1092: 'The LEGO Movie',
+	1093: 'DC Comics', 1094: 'DC Comics', 1095: 'DC Comics',
+	1096: 'Ninjago', 1097: 'Ninjago', 1098: 'Ninjago',
+	1099: 'Back to the Future', 1100: 'Back to the Future', 1101: 'Back to the Future',
+	1102: 'DC Comics', 1103: 'DC Comics', 1104: 'DC Comics',
+	1105: 'DC Comics', 1106: 'DC Comics', 1107: 'DC Comics',
+	1108: 'DC Comics', 1109: 'DC Comics', 1110: 'DC Comics',
+	1111: 'DC Comics', 1112: 'DC Comics', 1113: 'DC Comics',
+	1114: 'DC Comics', 1115: 'DC Comics', 1116: 'DC Comics',
+	1117: 'Doctor Who', 1118: 'Doctor Who', 1119: 'Doctor Who',
+	1120: 'Ghostbusters', 1121: 'Ghostbusters', 1122: 'Ghostbusters',
+	1123: 'Ghostbusters', 1124: 'Ghostbusters', 1125: 'Ghostbusters',
+	1132: 'Ninjago', 1133: 'Ninjago', 1144: 'Ninjago',
+	1155: 'Ninjago', 1156: 'Ninjago', 1157: 'Ninjago',
+	1158: 'Midway Arcade', 1159: 'Midway Arcade', 1160: 'Midway Arcade',
+	1161: 'Midway Arcade', 1162: 'Midway Arcade', 1163: 'Midway Arcade',
+	1164: 'Ghostbusters', 1165: 'Ghostbusters', 1166: 'Ghostbusters',
+	1167: 'Ghostbusters', 1168: 'Ghostbusters', 1169: 'Ghostbusters',
+	1170: 'Adventure Time', 1171: 'Adventure Time', 1172: 'Adventure Time',
+	1173: 'Adventure Time', 1174: 'Adventure Time', 1175: 'Adventure Time',
+	1176: 'Adventure Time', 1177: 'Adventure Time', 1178: 'Adventure Time',
+	1179: 'Adventure Time', 1180: 'Adventure Time', 1181: 'Adventure Time',
+	1182: 'Adventure Time', 1183: 'Adventure Time', 1184: 'Adventure Time',
+	1185: 'A-Team', 1186: 'A-Team', 1187: 'A-Team',
+	1188: 'E.T.', 1189: 'E.T.', 1190: 'E.T.',
+	1191: 'Fantastic Beasts', 1192: 'Fantastic Beasts', 1193: 'Fantastic Beasts',
+	1194: 'Fantastic Beasts', 1195: 'Fantastic Beasts', 1196: 'Fantastic Beasts',
+	1197: 'Ghostbuster 2016', 1198: 'Ghostbuster 2016', 1199: 'Ghostbuster 2016',
+	1200: 'Gremlins', 1201: 'Gremlins', 1202: 'Gremlins',
+	1203: 'Gremlins', 1204: 'Gremlins', 1205: 'Gremlins',
+	1206: 'Harry Potter', 1207: 'Harry Potter', 1208: 'Harry Potter',
+	1209: 'Harry Potter', 1210: 'Harry Potter', 1211: 'Harry Potter',
+	1212: 'Mission Impossible', 1213: 'Mission Impossible', 1214: 'Mission Impossible',
+	1215: 'Mission Impossible', 1216: 'Mission Impossible', 1217: 'Mission Impossible',
+	1218: 'Sonic', 1219: 'Sonic', 1220: 'Sonic',
+	1221: 'Sonic', 1222: 'Sonic', 1223: 'Sonic',
+	1224: 'Knight Rider', 1225: 'Knight Rider', 1226: 'Knight Rider',
+	1227: 'LEGO City', 1228: 'LEGO City', 1229: 'LEGO City',
+	1230: 'LEGO Batman Movie', 1231: 'LEGO Batman Movie', 1232: 'LEGO Batman Movie',
+	1233: 'LEGO Batman Movie', 1234: 'LEGO Batman Movie', 1235: 'LEGO Batman Movie',
+	1236: 'Beetle Juice', 1237: 'Beetle Juice', 1238: 'Beetle Juice',
+	1239: 'Goonies', 1240: 'Goonies', 1241: 'Goonies',
+	1242: 'Harry Potter', 1243: 'Harry Potter', 1244: 'Harry Potter',
+	1245: 'Beetle Juice', 1246: 'Beetle Juice', 1247: 'Beetle Juice',
+	1248: 'Power Puff Girls', 1249: 'Power Puff Girls', 1250: 'Power Puff Girls',
+	1251: 'Power Puff Girls', 1252: 'Power Puff Girls', 1253: 'Power Puff Girls',
+	1254: 'Power Puff Girls', 1255: 'Power Puff Girls', 1256: 'Power Puff Girls',
+	1257: 'Teen Titans Go', 1258: 'Teen Titans Go', 1259: 'Teen Titans Go',
+	1260: 'Teen Titans Go', 1261: 'Teen Titans Go', 1262: 'Teen Titans Go',
+	1263: 'Teen Titans Go', 1264: 'Teen Titans Go', 1265: 'Teen Titans Go'
+};
+tokenmap.forEach(function (t) {
+	t.world = vehicleWorldMap[t.id] || 'Other';
+});
+
+function normalizeWorld(w) {
+	var key = (w || 'Other').trim();
+	var lower = key.toLowerCase();
+	if (lower === 'dc comics') return 'DC Comics';
+	if (lower === 'lego batman movie') return 'LEGO Batman Movie';
+	if (lower === 'wizard of oz') return 'Wizard of Oz';
+	if (lower === 'n/a') return 'Unreleased';
+	return key;
+}
+
+function buildFranchiseGroups() {
+	var byWorld = {};
+	tokens.forEach(function (item) {
+		var key = normalizeWorld(item.world);
+		if (!byWorld[key]) byWorld[key] = { world: key, items: [] };
+		byWorld[key].items.push(item);
+	});
+	return Object.keys(byWorld).sort().map(function (key) {
+		var group = byWorld[key];
+		group.items.sort(function (a, b) {
+			return a.id - b.id;
+		});
+		return group;
+	});
+}
+
 var UpgradeManager = require('./UpgradeManager.js');
 
 var MainController = function () {
@@ -63205,6 +63317,8 @@ var MainController = function () {
 		this.detectedId = null;
 		this.debugInfo = null;
 		this.tagHistory = [];
+		this.pickerSearch = '';
+		this.franchiseGroups = buildFranchiseGroups();
 
 		try {
 			var saved = JSON.parse(localStorage.getItem('ldtageditor.state') || '{}');
@@ -63279,12 +63393,25 @@ var MainController = function () {
      },	{
 		key: 'getName',
 		value: function getName(token) {
-			return this.getMap(token).name || '';
+			var m = this.getMap(token);
+			return m ? m.name || '' : 'Unknown Tag';
 		}
 	}, {
 		key: 'getWorld',
 		value: function getWorld(token) {
-			return this.getMap(token).world || '';
+			var m = this.getMap(token);
+			return m ? m.world || '' : '';
+		}
+	}, {
+		key: 'selectItem',
+		value: function selectItem(item) {
+			this.token = {
+				character: item.id < 1000,
+				id: item.id,
+				maxUpgrades: false
+			};
+			this.dialog = 'write';
+			this.saveState();
 		}
 	}, {
 		key: 'cancel',

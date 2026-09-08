@@ -7,14 +7,14 @@
 		<script src="app.js"></script>
         <style>
             /* Ensure the fallback has priority */
-            .is-fallback { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #FF0000, 0 0 0 10px #000; border-radius: 50%; }
+            .is-fallback { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #FF0000, 0 0 0 6px #000; border-radius: 50%; }
 
-            .pack-starter { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #1E90FF, 0 0 0 10px #000; border-radius: 50%; }
-            .pack-fun { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #32CD32, 0 0 0 10px #000; border-radius: 50%; }
-            .pack-level { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #FFD700, 0 0 0 10px #000; border-radius: 50%; }
-            .pack-story { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #8A2BE2, 0 0 0 10px #000; border-radius: 50%; }
-            .pack-team { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #FF8C00, 0 0 0 10px #000; border-radius: 50%; }
-            .pack-unreleased { box-shadow: 0 0 0 2px #000 inset, 0 0 0 8px #808080, 0 0 0 10px #000; border-radius: 50%; }
+            .pack-starter { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #1E90FF, 0 0 0 6px #000; border-radius: 50%; }
+            .pack-fun { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #32CD32, 0 0 0 6px #000; border-radius: 50%; }
+            .pack-level { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #FFD700, 0 0 0 6px #000; border-radius: 50%; }
+            .pack-story { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #8A2BE2, 0 0 0 6px #000; border-radius: 50%; }
+            .pack-team { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #FF8C00, 0 0 0 6px #000; border-radius: 50%; }
+            .pack-unreleased { box-shadow: 0 0 0 2px #000 inset, 0 0 0 3px #808080, 0 0 0 6px #000; border-radius: 50%; }
 
             .tag-image {
                 width: 150px; height: 150px; border-radius: 50%;
@@ -45,8 +45,53 @@
             }
         </style>
 	</head>
-	<body ng-controller="MainController as main" style="background: url('background.jpg') no-repeat fixed; background-size: 100% auto; background-color: #000;">
+	<body ng-controller="MainController as main" style="background: url('ld_background.png') no-repeat fixed; background-size: auto 100%; background-position: center center; background-color: #000;">
 		<div class="main-content">
+		<div class="tokenEditor" ng-hide="main.dialog">
+      <div style="padding: 20px;">
+
+      <img ng-if="main.detectedId" class="tag-image"
+           style="margin: 0 auto 15px auto;"
+           ng-src="{{main.getImagePath(main.detectedId)}}"
+           onerror="this.src='images/ph.png'; this.className='tag-image is-fallback';"
+           ng-class="main.getBorderClass(main.detectedId)"
+           alt="Tag Visual" />
+
+      <div style="margin-bottom: 15px;">
+        <label>Tag Type:</label><br>
+        <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag213">NTAG213</label>
+        <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag215">NTAG215 <span style="color:red;font-weight:bold;">EXP</span></label>
+        <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag216">NTAG216 <span style="color:red;font-weight:bold;">EXP</span></label>
+      </div>
+
+      <p style="text-align: center; color: #888; font-size: 14px; margin-bottom: 15px;">Approach a tag to load it</p>
+
+      <!-- Combined item picker grouped by franchise -->
+      <div style="background-color: #fcfcfc; padding: 15px; border-radius: 10px;">
+        <input type="text" class="form-control" placeholder="Search..." ng-model="main.pickerSearch" style="margin-bottom: 10px;">
+
+        <div style="max-height: 50vh; overflow-y: auto;">
+          <div ng-repeat="group in main.franchiseGroups" ng-if="(group.items | filter:main.pickerSearch).length">
+            <h5 style="color: #888; text-transform: uppercase; font-size: 11px; margin: 12px 0 6px 0; border-bottom: 1px solid #ddd; padding-bottom: 4px;">{{group.world}}</h5>
+            <div style="display: flex; flex-wrap: wrap;">
+              <div ng-repeat="item in group.items | filter:main.pickerSearch track by item.id"
+                   ng-click="main.selectItem(item)"
+                   style="width: 33.33%; text-align: center; padding: 8px; box-sizing: border-box; cursor: pointer;">
+                <img src="{{main.getImagePath(item.id)}}"
+                     onerror="this.src='images/ph.png'; this.className='pack-thumb is-fallback';"
+                     class="pack-thumb"
+                     ng-class="main.getBorderClass(item.id)"
+                     style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;">
+                <div style="font-size: 11px; margin-top: 4px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.name}}</div>
+                <div style="font-size: 10px; color: #999;">#{{item.id}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      </div>
+		</div>
 		<div id="tag-info-card" style="margin: 15px; padding: 12px; border-radius: 8px; background: #222; color: #fff; text-align: center;">
 			<span style="font-size: 12px; color: #aaa; text-transform: uppercase;">Scanned Tag</span>
 			<h3 id="detected-character-name" style="margin: 6px 0 2px 0;">{{main.detectedName || 'No Tag Detected'}}</h3>
@@ -68,69 +113,23 @@
 				</ul>
 			</div>
 		</div>
-		<div class="tokenEditor" ng-hide="main.dialog">
-      <div style="padding: 20px;">
-      <div ng-if="!main.token.uid" style="text-align: center; color: #fff; padding: 40px 20px;">
-        <img src="nfc_tag.png" height="120" style="margin-bottom: 15px;" alt="NFC tag" />
-        <h4 style="margin: 0; font-weight: 600;">Place an NTAG213 tag on your phone</h4>
-        <p style="color: #aaa; font-size: 14px;">The app will automatically scan it</p>
-      </div>
-      <div ng-if="main.token.uid" style="background-color: #fcfcfc; padding: 20px; border-radius: 10px; margin-bottom: 10px;">
-        <div class="form-group">
-          <label>UID:</label>
-          <input type="text" class="form-control" ng-model="main.token.uid" readonly>
-        </div>
-        <div class="form-group">
-          <label>Type:</label><br>
-          <label class="radio-inline">
-            <input type="radio" name="type" ng-model="main.token.character" ng-value="true">
-            Character
-          </label>
-          <label class="radio-inline">
-            <input type="radio" name="type" ng-model="main.token.character" ng-value="false">
-            Vehicle/Gadget
-          </label>
-        </div>			
-        <div>
-          <label>ID:</label>
-          <select ng-model="main.token.id" class="form-control" ng-options="char.id as char.name for char in main.charmap" ng-show="main.token.character"></select>
-          <select ng-model="main.token.id" class="form-control" ng-options="token.id as token.name for token in main.tokenmap" ng-hide="main.token.character"></select>
-        </div>
-          <div ng-if="main.token.id" style="margin-top: 20px; text-align: center;">
-              <img class="tag-image"
-                   style="margin: 0 auto;"
-                   ng-src="{{main.getImagePath(main.token.id)}}"
-                   onerror="this.src='images/ph.png'; this.className='tag-image is-fallback';"
-                   ng-class="main.getBorderClass(main.token.id)"
-                   alt="Tag Visual" />
-
-              <div style="margin-top: 10px; color: white;">
-                  <strong>Pack: {{main.getPackType(main.token.id)}}</strong>
-              </div>
-          </div>
-        <div ng-hide="main.token.character">
-          <label class="checkbox-inline" style="margin-top: 10px;">* = rebuild</label>
-          <label class="checkbox-inline" style="margin-top: 10px;"><input type="checkbox" ng-model="main.token.maxUpgrades">Full Upgrades</label>
-        </div>
-      </div>
-      <div>
-        <button class="btn btn-lg btn-primary" ng-click="main.readToken(main.token)" style="float: left;" ng-style="main.token.uid && {'width':'49%'} || {'width': '100%'}" ng-if="main.token.uid">Read</button>
-         <button class="btn btn-lg btn-success" ng-click="main.writeToken(main.token)" style="float: left; width: 49%; margin-left: 2%;" ng-if="main.token.uid">Write</button>
-      </div>
-      </div>
-		</div>
 		</div>
 		<div class="overlay" ng-show="main.dialog" style="text-align: center; color: #fff;">
-      <div style="padding: 20px; font-size: 18px; font-weight: 800; text-align: center; width: 100%;"><img src="nfc_tag.png" height="200" /> </div>
+      <div ng-if="main.dialog == 'write' && main.token.id" style="padding: 20px;">
+        <img class="tag-image"
+             style="margin: 0 auto;"
+             ng-src="{{main.getImagePath(main.token.id)}}"
+             onerror="this.src='images/ph.png'; this.className='tag-image is-fallback';"
+             ng-class="main.getBorderClass(main.token.id)"
+             alt="Tag Visual" />
+        <h4 style="margin: 10px 0 0 0;">Writing: {{main.getName(main.token)}}</h4>
+        <div ng-hide="main.token.character" style="margin-top: 10px;">
+          <label class="checkbox-inline"><input type="checkbox" ng-model="main.token.maxUpgrades"> Full Upgrades (* = rebuild)</label>
+        </div>
+      </div>
+      <div ng-if="main.dialog != 'write' || !main.token.id" style="padding: 20px; font-size: 18px; font-weight: 800; text-align: center; width: 100%;"><img src="nfc_tag.png" height="200" /> </div>
 			<div style="padding: 20px; font-size: 18px; font-weight: 800;">Please place phone on token</div>
 			<button class="btn btn-danger" ng-click="main.cancel()">Cancel</button>
-		</div>
-		<div class="ntag" ng-init="main.tagType='ntag213'" ng-show="main.dialog == 'write'" style="padding: 20px; color: #FFF;">
-			<label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag213">NTAG213</label>
-			<br>
-			<label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag215">NTAG215</label> <span style="color: red; font-weight: bold">EXPIREMENTAL</span>
-			<br>
-			<label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag216">NTAG216</label> <span style="color: red; font-weight: bold">EXPIREMENTAL</span>
 		</div>
 	</body>
 </html>
