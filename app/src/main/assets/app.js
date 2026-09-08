@@ -63201,7 +63201,18 @@ var MainController = function () {
 		this.token = {};
 		this.detectedName = null;
 		this.detectedId = null;
+		this.debugInfo = null;
 		this.tagHistory = [];
+
+		try {
+			var saved = JSON.parse(localStorage.getItem('ldtageditor.state') || '{}');
+			if (saved.token) this.token = saved.token;
+			if (saved.detectedName !== undefined) this.detectedName = saved.detectedName;
+			if (saved.detectedId !== undefined) this.detectedId = saved.detectedId;
+			if (saved.debugInfo !== undefined) this.debugInfo = saved.debugInfo;
+			if (saved.tagHistory) this.tagHistory = saved.tagHistory;
+		} catch (e) {}
+
 		this.api.on('tagDetected', function () {
 			return $scope.$apply(function () {
 				return _this.tagDetected();
@@ -63213,6 +63224,19 @@ var MainController = function () {
 	}
 
 	_createClass(MainController, [{
+		key: 'saveState',
+		value: function saveState() {
+			try {
+				localStorage.setItem('ldtageditor.state', JSON.stringify({
+					token: this.token,
+					detectedName: this.detectedName,
+					detectedId: this.detectedId,
+					debugInfo: this.debugInfo,
+					tagHistory: this.tagHistory
+				}));
+			} catch (e) {}
+		}
+	}, {
 		key: 'getMap',
 		value: function getMap(token) {
 			return tokens.find(function (cm) {
@@ -63352,6 +63376,8 @@ var MainController = function () {
 				});
 				if (this.tagHistory.length > 20) this.tagHistory.pop();
 			}
+
+			this.saveState();
 		}
 	}, {
 		key: 'tagDetected',
