@@ -1,3 +1,14 @@
+# Lego Dimensions Tag Editor v3
+
+## Planned features:
+- get information from the nfc tag like current character or vehicle in the memory
+- from that display the internal id for development
+- being able to add new characters
+- support for unreleased characters
+- categories for selections
+
+
+forked from https://github.com/omer-yalcin/ldtageditor which was forked from https://github.com/naleo/ldtageditor-v2
 # ldtageditor-v2
 Lego Dimensions Tag Editor - Updated
 
