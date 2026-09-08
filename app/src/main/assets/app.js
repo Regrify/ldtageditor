@@ -63319,6 +63319,8 @@ var MainController = function () {
 		this.tagHistory = [];
 		this.pickerSearch = '';
 		this.franchiseGroups = buildFranchiseGroups();
+		this.settings = { showCustomTag: false, showDebugInfo: false };
+		this.showSettings = false;
 
 		try {
 			var saved = JSON.parse(localStorage.getItem('ldtageditor.state') || '{}');
@@ -63327,6 +63329,10 @@ var MainController = function () {
 			if (saved.detectedId !== undefined) this.detectedId = saved.detectedId;
 			if (saved.debugInfo !== undefined) this.debugInfo = saved.debugInfo;
 			if (saved.tagHistory) this.tagHistory = saved.tagHistory;
+			if (saved.settings) {
+				if (saved.settings.showCustomTag !== undefined) this.settings.showCustomTag = saved.settings.showCustomTag;
+				if (saved.settings.showDebugInfo !== undefined) this.settings.showDebugInfo = saved.settings.showDebugInfo;
+			}
 		} catch (e) {}
 
 		this.api.on('tagDetected', function () {
@@ -63348,9 +63354,25 @@ var MainController = function () {
 					detectedName: this.detectedName,
 					detectedId: this.detectedId,
 					debugInfo: this.debugInfo,
-					tagHistory: this.tagHistory
+					tagHistory: this.tagHistory,
+					settings: this.settings
 				}));
 			} catch (e) {}
+		}
+	}, {
+		key: 'openSettings',
+		value: function openSettings() {
+			this.showSettings = true;
+		}
+	}, {
+		key: 'closeSettings',
+		value: function closeSettings() {
+			this.showSettings = false;
+		}
+	}, {
+		key: 'createCustomTag',
+		value: function createCustomTag() {
+			// Placeholder for custom tag creation
 		}
 	}, {
 		key: 'getMap',

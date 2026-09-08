@@ -49,6 +49,159 @@
                     min-height: 0;
                 }
             }
+
+            .fab {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 84px;
+                height: 84px;
+                border-radius: 50%;
+                background: #fff;
+                border: none;
+                padding: 0;
+                cursor: pointer;
+                box-shadow: 0 3px 15px rgba(0,0,0,0.5);
+                z-index: 1000;
+            }
+            .fab img {
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                object-fit: cover;
+                display: block;
+            }
+            .fab:active {
+                transform: scale(0.95);
+            }
+
+            .settings-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 1100;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .settings-panel {
+                background: #222;
+                color: #fff;
+                border-radius: 10px;
+                padding: 20px;
+                width: 100%;
+                max-width: 400px;
+            }
+            .settings-panel h3 {
+                margin: 0 0 20px 0;
+                text-align: center;
+            }
+            .settings-toggle {
+                margin-bottom: 15px;
+            }
+            .settings-toggle label {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                color: #fff;
+                font-size: 16px;
+                margin: 0;
+                cursor: pointer;
+                padding: 10px 0;
+            }
+            .settings-toggle input[type="checkbox"] {
+                display: none;
+            }
+            .settings-toggle .slider {
+                position: relative;
+                width: 48px;
+                height: 28px;
+                background: #555;
+                border-radius: 999px;
+                transition: background 0.2s;
+                flex-shrink: 0;
+                margin-left: 10px;
+            }
+            .settings-toggle .slider::after {
+                content: '';
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                width: 24px;
+                height: 24px;
+                background: #fff;
+                border-radius: 50%;
+                transition: transform 0.2s;
+            }
+            .settings-toggle input:checked + .slider {
+                background: #4CAF50;
+            }
+            .settings-toggle input:checked + .slider::after {
+                transform: translateX(20px);
+            }
+            .settings-close {
+                margin-top: 20px;
+                text-align: center;
+            }
+            .settings-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+            .settings-header h3 {
+                margin: 0;
+            }
+            .settings-close-x {
+                background: none;
+                border: none;
+                color: #fff;
+                font-size: 32px;
+                font-weight: bold;
+                cursor: pointer;
+                padding: 0 4px;
+                line-height: 1;
+            }
+            .settings-close-x:active {
+                color: #ff4d4d;
+            }
+            .tag-type-pills {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            .tag-type-pills label {
+                cursor: pointer;
+                padding: 6px 12px;
+                border-radius: 999px;
+                border: 1px solid #ccc;
+                background: #f0f0f0;
+                color: #555;
+                font-size: 13px;
+                margin: 0;
+                font-weight: normal;
+            }
+            .tag-type-pills input[type="radio"] {
+                display: none;
+            }
+            .tag-type-pills .pill-active {
+                background: #333;
+                color: #fff;
+                border-color: #333;
+            }
+            .tag-type-pills .exp-tag {
+                color: red;
+                font-weight: bold;
+            }
+            .pill-active .exp-tag {
+                color: #fff;
+            }
         </style>
 	</head>
 	<body ng-controller="MainController as main" style="background: url('ld_background.png') no-repeat fixed; background-size: auto 100%; background-position: center center; background-color: #000;">
@@ -65,15 +218,27 @@
              alt="Tag Visual" />
         <h4 style="margin: 0 0 2px 0; color: #333;">{{main.detectedName || 'No Tag Detected'}}</h4>
         <p style="color: #888; font-size: 13px; margin: 0 0 10px 0;">
-          {{main.detectedId ? 'ID: ' + main.detectedId : 'Approach a tag to load it'}}<br>
-          <span ng-if="main.detectedId">{{main.getWorldById(main.detectedId)}}<span ng-if="main.getPackType(main.detectedId)"> · {{main.getPackType(main.detectedId)}} Pack</span></span>
+          <span ng-if="main.detectedId">{{main.getWorldById(main.detectedId)}}<span ng-if="main.getPackType(main.detectedId)"> · {{main.getPackType(main.detectedId)}} Pack</span><br></span>
+          {{main.detectedId ? 'ID: ' + main.detectedId : 'Approach a tag to load it'}}
         </p>
         <div style="text-align: left; border-top: 1px solid #ddd; padding-top: 10px;">
-          <label>Tag Type:</label><br>
-          <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag213">NTAG213</label>
-          <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag215">NTAG215 <span style="color:red;font-weight:bold;">EXP</span></label>
-          <label class="radio-inline"><input type="radio" ng-model="main.tagType" value="ntag216">NTAG216 <span style="color:red;font-weight:bold;">EXP</span></label>
+          <label style="display: block; margin-bottom: 6px;">Tag Type:</label>
+          <div class="tag-type-pills">
+            <label ng-class="{'pill-active': main.tagType == 'ntag213'}">
+              <input type="radio" ng-model="main.tagType" value="ntag213" style="display: none;">
+              <span>NTAG213</span>
+            </label>
+            <label ng-class="{'pill-active': main.tagType == 'ntag215'}">
+              <input type="radio" ng-model="main.tagType" value="ntag215" style="display: none;">
+              <span>NTAG215 <span class="exp-tag">EXP</span></span>
+            </label>
+            <label ng-class="{'pill-active': main.tagType == 'ntag216'}">
+              <input type="radio" ng-model="main.tagType" value="ntag216" style="display: none;">
+              <span>NTAG216 <span class="exp-tag">EXP</span></span>
+            </label>
+          </div>
         </div>
+        <button ng-if="main.settings.showCustomTag" class="btn btn-lg btn-primary" ng-click="main.createCustomTag()" style="width: 100%; margin-top: 15px;">Create Custom Tag</button>
       </div>
 
       </div>
@@ -107,17 +272,10 @@
 
       </div>
 		</div>
-		<div id="tag-info-card" style="margin: 15px; padding: 12px; border-radius: 8px; background: #222; color: #fff; text-align: center;">
+		<div id="tag-info-card" ng-if="main.settings.showDebugInfo" style="margin: 15px; padding: 12px; border-radius: 8px; background: #222; color: #fff; text-align: center;">
 			<span style="font-size: 12px; color: #aaa; text-transform: uppercase;">Scanned Tag</span>
 			<h3 id="detected-character-name" style="margin: 6px 0 2px 0;">{{main.detectedName || 'No Tag Detected'}}</h3>
 			<p id="detected-character-id" style="margin: 0; font-size: 13px; color: #888;">{{main.detectedId ? 'ID: ' + main.detectedId : 'Tap an NTAG213 tag to inspect'}}</p>
-			<div ng-if="main.debugInfo" style="margin-top: 8px; padding: 8px; background: #111; border-radius: 4px; font-size: 10px; color: #0f0; text-align: left; word-break: break-all; font-family: monospace;">
-				UID: {{main.debugInfo.uid}}<br>
-				P23: {{main.debugInfo.page23}}<br>
-				RAW: {{main.debugInfo.raw}}<br>
-				CHAR: {{main.debugInfo.character}}<br>
-				BUILD: {{main.debugInfo.build}}
-			</div>
 			<div ng-if="main.tagHistory.length" style="margin-top: 10px; text-align: left; max-height: 150px; overflow-y: auto;">
 				<h5 style="color: #aaa; text-transform: uppercase; font-size: 11px; margin: 0 0 6px 0;">History</h5>
 				<ul style="list-style: none; padding: 0; margin: 0;">
@@ -126,6 +284,13 @@
 						<div style="color: #888; font-size: 12px;">{{entry.time}} · ID: {{entry.id || '—'}}, UID: {{entry.uid}}</div>
 					</li>
 				</ul>
+			</div>
+			<div ng-if="main.debugInfo" style="margin-top: 10px; padding: 8px; background: #111; border-radius: 4px; font-size: 10px; color: #0f0; text-align: left; word-break: break-all; font-family: monospace;">
+				UID: {{main.debugInfo.uid}}<br>
+				P23: {{main.debugInfo.page23}}<br>
+				RAW: {{main.debugInfo.raw}}<br>
+				CHAR: {{main.debugInfo.character}}<br>
+				BUILD: {{main.debugInfo.build}}
 			</div>
 		</div>
 		</div>
@@ -146,5 +311,30 @@
 			<div style="padding: 20px; font-size: 18px; font-weight: 800;">Please place phone on token</div>
 			<button class="btn btn-danger" ng-click="main.cancel()">Cancel</button>
 		</div>
+		<div class="settings-overlay" ng-if="main.showSettings">
+			<div class="settings-panel">
+				<div class="settings-header">
+					<h3>Settings</h3>
+					<button class="settings-close-x" ng-click="main.closeSettings()">&times;</button>
+				</div>
+				<div class="settings-toggle">
+					<label>
+						<span>Show Create Custom Tags Button</span>
+						<input type="checkbox" ng-model="main.settings.showCustomTag" ng-change="main.saveState()">
+						<span class="slider"></span>
+					</label>
+				</div>
+				<div class="settings-toggle">
+					<label>
+						<span>Enable Debug Info</span>
+						<input type="checkbox" ng-model="main.settings.showDebugInfo" ng-change="main.saveState()">
+						<span class="slider"></span>
+					</label>
+				</div>
+			</div>
+		</div>
+		<button class="fab" ng-hide="main.dialog || main.showSettings" ng-click="main.openSettings()">
+			<img src="ld_settings.png" alt="Settings">
+		</button>
 	</body>
 </html>
