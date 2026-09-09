@@ -9,7 +9,7 @@
 
     <application
         android:label="LEGO Tag Editor"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
         android:supportsRtl="true">

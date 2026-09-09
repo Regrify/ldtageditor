@@ -1,7 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 36
+    namespace 'com.ld.tageditor'
+    compileSdkVersion 34
 
     defaultConfig {
         applicationId "com.naleo.ldtageditor"
