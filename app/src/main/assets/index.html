@@ -2,6 +2,7 @@
 <html lang="en" ng-app="ldtageditor">
 	<head>
 		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 		<title>LDTagEditor</title>
     <link rel="stylesheet" href="bootstrap.min.css">
 		<script src="app.js"></script>
@@ -31,7 +32,7 @@
                     display: grid;
                     grid-template-columns: 1fr 1fr;
                     grid-template-rows: auto minmax(0, 1fr);
-                    height: 100vh;
+                    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
                 }
                 .main-content > .char-panel {
                     grid-column: 1;
@@ -46,22 +47,16 @@
                 .picker-panel .picker-list {
                     max-height: none;
                 }
-                .main-content > #tag-info-card {
-                    grid-column: 1;
-                    grid-row: 2;
-                    overflow-y: auto;
-                    min-height: 0;
-                }
             }
 
             .fab {
                 position: fixed;
-                bottom: 20px;
+                bottom: calc(20px + env(safe-area-inset-bottom));
                 right: 20px;
                 width: 84px;
                 height: 84px;
                 border-radius: 50%;
-                background: #fff;
+                background: #333;
                 border: none;
                 padding: 0;
                 cursor: pointer;
@@ -184,9 +179,9 @@
                 cursor: pointer;
                 padding: 6px 12px;
                 border-radius: 999px;
-                border: 1px solid #ccc;
-                background: #f0f0f0;
-                color: #555;
+                border: 1px solid #555;
+                background: #2a2a2a;
+                color: #ccc;
                 font-size: 13px;
                 margin: 0;
                 font-weight: normal;
@@ -206,26 +201,58 @@
             .pill-active .exp-tag {
                 color: #fff;
             }
+
+            .form-control {
+                background-color: #2a2a2a;
+                color: #eee;
+                border: 1px solid #555;
+            }
+            .form-control:focus {
+                background-color: #2a2a2a;
+                color: #eee;
+                border-color: #666;
+                box-shadow: inset 0 1px 1px rgba(0,0,0,0.075), 0 0 8px rgba(255,255,255,0.15);
+            }
+            .form-control::placeholder {
+                color: #888;
+            }
+            select.form-control option {
+                background-color: #2a2a2a;
+                color: #eee;
+            }
+            .btn-default {
+                background-color: #333;
+                color: #eee;
+                border-color: #555;
+            }
+            .btn-primary {
+                background-color: #2a6496;
+                border-color: #2a6496;
+            }
+            .btn-danger {
+                background-color: #a94442;
+                border-color: #a94442;
+            }
         </style>
 	</head>
-	<body ng-controller="MainController as main" style="background: url('ld_background.png') no-repeat fixed; background-size: auto 100%; background-position: center center; background-color: #000;">
+	<body ng-controller="MainController as main" style="background: url('ld_background.png') no-repeat fixed; background-size: auto 100%; background-position: center center; background-color: #000; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);">
 		<div class="main-content">
 		<div class="char-panel" ng-hide="main.dialog">
       <div style="padding: 15px;">
 
-      <div style="background-color: #fcfcfc; padding: 15px; border-radius: 10px; text-align: center;">
+      <div style="background-color: #1a1a1a; padding: 15px; border-radius: 10px; text-align: center;">
         <img ng-if="main.detectedId" class="tag-image"
              style="margin: 0 auto 10px auto;"
              ng-src="{{main.getImagePath(main.detectedId)}}"
              onerror="this.src='images/ph.png'; this.className='tag-image is-fallback';"
              ng-class="main.getBorderClass(main.detectedId)"
              alt="Tag Visual" />
-        <h4 style="margin: 0 0 2px 0; color: #333;">{{main.detectedName || 'No Tag Detected'}}</h4>
-        <p style="color: #888; font-size: 13px; margin: 0 0 10px 0;">
+        <h4 style="margin: 0 0 2px 0; color: #eee;">{{main.detectedName || 'No Tag Detected'}}</h4>
+        <p style="color: #aaa; font-size: 13px; margin: 0 0 10px 0;">
           <span ng-if="main.detectedId">{{main.getWorldById(main.detectedId)}}<span ng-if="main.getPackType(main.detectedId)"> · {{main.getPackType(main.detectedId)}} Pack</span><br></span>
           {{main.detectedId ? 'ID: ' + main.detectedId : 'Approach a tag to load it'}}
         </p>
-        <div style="text-align: left; border-top: 1px solid #ddd; padding-top: 10px;">
+        <div style="text-align: left; border-top: 1px solid #444; padding-top: 10px;">
           <label style="display: block; margin-bottom: 6px;">Tag Type:</label>
           <div class="tag-type-pills">
             <label ng-class="{'pill-active': main.tagType == 'ntag213'}">
@@ -242,7 +269,8 @@
             </label>
           </div>
         </div>
-        <button ng-if="main.settings.showCustomTag" class="btn btn-lg btn-primary" ng-click="main.openCustomTagDialog()" style="width: 100%; margin-top: 15px;">Create Custom Tag</button>
+        <button class="btn btn-lg btn-danger" ng-click="main.emptyTag()" style="width: 100%; margin-top: 15px;">Empty Tag</button>
+        <button ng-if="main.settings.showCustomTag" class="btn btn-lg btn-primary" ng-click="main.openCustomTagDialog()" style="width: 100%; margin-top: 10px;">Create Custom Tag</button>
       </div>
 
       </div>
@@ -251,12 +279,12 @@
       <div style="padding: 15px;">
 
       <!-- Combined item picker grouped by franchise -->
-      <div style="background-color: #fcfcfc; padding: 15px; border-radius: 10px;">
+      <div style="background-color: #1a1a1a; padding: 15px; border-radius: 10px;">
         <input type="text" class="form-control" placeholder="Search..." ng-model="main.pickerSearch" style="margin-bottom: 10px;">
 
         <div class="picker-list" style="max-height: 50vh; overflow-y: auto;">
           <div ng-repeat="group in main.franchiseGroups" ng-if="(group.items | filter:main.pickerSearch).length">
-            <h5 style="color: #888; text-transform: uppercase; font-size: 11px; margin: 12px 0 6px 0; border-bottom: 1px solid #ddd; padding-bottom: 4px;">{{group.world}}</h5>
+            <h5 style="color: #aaa; text-transform: uppercase; font-size: 11px; margin: 12px 0 6px 0; border-bottom: 1px solid #444; padding-bottom: 4px;">{{group.world}}</h5>
             <div style="display: flex; flex-wrap: wrap;">
               <div ng-repeat="item in group.items | filter:main.pickerSearch track by item.id"
                    style="width: 33.33%; text-align: center; padding: 8px; box-sizing: border-box;">
@@ -266,12 +294,12 @@
                        class="pack-thumb"
                        ng-class="main.getBorderClass(item.id)"
                        style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;">
-                  <div style="font-size: 11px; margin-top: 4px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.name}}</div>
-                  <div style="font-size: 10px; color: #999;">#{{item.id}}<span ng-if="item.custom" style="color: #E91E63; font-weight: bold;"> &middot; Custom</span></div>
+                  <div style="font-size: 11px; margin-top: 4px; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.name}}</div>
+                  <div style="font-size: 10px; color: #888;">#{{item.id}}<span ng-if="item.custom" style="color: #E91E63; font-weight: bold;"> &middot; Custom</span></div>
                 </div>
                 <div ng-if="item.custom" style="display: flex; justify-content: center; gap: 6px; margin-top: 4px;">
-                  <button ng-click="main.editCustomTag(item)" style="border: none; background: #eee; border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;">Edit</button>
-                  <button ng-click="main.deleteCustomTag(item)" style="border: none; background: #fdd; color: #c00; border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;">Delete</button>
+                  <button ng-click="main.editCustomTag(item)" style="border: none; background: #444; color: #ddd; border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;">Edit</button>
+                  <button ng-click="main.deleteCustomTag(item)" style="border: none; background: #4a2222; color: #f88; border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer;">Delete</button>
                 </div>
               </div>
             </div>
@@ -281,29 +309,41 @@
 
       </div>
 		</div>
-		<div id="tag-info-card" ng-if="main.settings.showDebugInfo" style="margin: 15px; padding: 12px; border-radius: 8px; background: #222; color: #fff; text-align: center;">
-			<span style="font-size: 12px; color: #aaa; text-transform: uppercase;">Scanned Tag</span>
-			<h3 id="detected-character-name" style="margin: 6px 0 2px 0;">{{main.detectedName || 'No Tag Detected'}}</h3>
-			<p id="detected-character-id" style="margin: 0; font-size: 13px; color: #888;">{{main.detectedId ? 'ID: ' + main.detectedId : 'Tap an NTAG213 tag to inspect'}}</p>
-			<div ng-if="main.tagHistory.length" style="margin-top: 10px; text-align: left; max-height: 150px; overflow-y: auto;">
-				<h5 style="color: #aaa; text-transform: uppercase; font-size: 11px; margin: 0 0 6px 0;">History</h5>
-				<ul style="list-style: none; padding: 0; margin: 0;">
-					<li ng-repeat="entry in main.tagHistory track by $index" style="padding: 5px 0; border-bottom: 1px solid #333;">
-						<div style="color: #fff; font-weight: 600;">{{entry.name}}</div>
-						<div style="color: #888; font-size: 12px;">{{entry.time}} · ID: {{entry.id || '—'}}, UID: {{entry.uid}}</div>
-					</li>
-				</ul>
-			</div>
-			<div ng-if="main.debugInfo" style="margin-top: 10px; padding: 8px; background: #111; border-radius: 4px; font-size: 10px; color: #0f0; text-align: left; word-break: break-all; font-family: monospace;">
-				UID: {{main.debugInfo.uid}}<br>
-				P23: {{main.debugInfo.page23}}<br>
-				RAW: {{main.debugInfo.raw}}<br>
-				CHAR: {{main.debugInfo.character}}<br>
-				BUILD: {{main.debugInfo.build}}
-			</div>
+
+		<div id="home-debug-card" ng-if="main.settings.showDebugInfo" ng-hide="main.dialog" style="padding: 15px;">
+        <div style="padding: 12px; border-radius: 8px; background: #222; color: #fff; text-align: center;">
+          <span style="font-size: 12px; color: #aaa; text-transform: uppercase;">Scanned Tag</span>
+          <h3 style="margin: 6px 0 2px 0;">{{main.detectedName || 'No Tag Detected'}}</h3>
+          <p style="margin: 0; font-size: 13px; color: #888;">{{main.detectedId ? 'ID: ' + main.detectedId : 'Tap an NTAG213 tag to inspect'}}</p>
+          <div ng-if="main.tagHistory.length" style="margin-top: 10px; text-align: left; max-height: 150px; overflow-y: auto;">
+            <h5 style="color: #aaa; text-transform: uppercase; font-size: 11px; margin: 0 0 6px 0;">History</h5>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              <li ng-repeat="entry in main.tagHistory track by $index" style="padding: 5px 0; border-bottom: 1px solid #333;">
+                <div style="color: #fff; font-weight: 600;">{{entry.name}}</div>
+                <div style="color: #888; font-size: 12px;">{{entry.time}} · ID: {{entry.id || '—'}}, UID: {{entry.uid}}</div>
+              </li>
+            </ul>
+          </div>
+          <div ng-if="main.debugInfo" style="margin-top: 10px; padding: 8px; background: #111; border-radius: 4px; font-size: 10px; color: #0f0; text-align: left; word-break: break-all; font-family: monospace;">
+            UID: {{main.debugInfo.uid}}<br>
+            P24: {{main.debugInfo.page24}}<br>
+            P25: {{main.debugInfo.page25}}<br>
+            P26: {{main.debugInfo.page26}}<br>
+            P27: {{main.debugInfo.page27}}<br>
+            LOCK: {{main.debugInfo.lock}}<br>
+            DYNLOCK: {{main.debugInfo.dynLock}}<br>
+            RAW: {{main.debugInfo.raw}}<br>
+            CHAR: {{main.debugInfo.character}}<br>
+            BUILD: {{main.debugInfo.build}}
+          </div>
+        </div>
 		</div>
 		</div>
 		<div class="overlay" ng-show="main.dialog" style="text-align: center; color: #fff;">
+      <div ng-if="main.dialog == 'write' && main.token.empty" style="padding: 20px;">
+        <img src="nfc_tag.png" height="150" style="margin: 0 auto; display: block;" />
+        <h4 style="margin: 10px 0 0 0;">Emptying Tag</h4>
+      </div>
       <div ng-if="main.dialog == 'write' && main.token.id" style="padding: 20px;">
         <img class="tag-image"
              style="margin: 0 auto;"
@@ -316,9 +356,37 @@
           <label class="checkbox-inline"><input type="checkbox" ng-model="main.token.maxUpgrades"> Full Upgrades (* = rebuild)</label>
         </div>
       </div>
-      <div ng-if="main.dialog != 'write' || !main.token.id" style="padding: 20px; font-size: 18px; font-weight: 800; text-align: center; width: 100%;"><img src="nfc_tag.png" height="200" /> </div>
-			<div style="padding: 20px; font-size: 18px; font-weight: 800;">Please place phone on token</div>
+      <div ng-if="main.dialog != 'write' || (!main.token.id && !main.token.empty)" style="padding: 20px; font-size: 18px; font-weight: 800; text-align: center; width: 100%;"><img src="nfc_tag.png" height="200" /> </div>
+			<div ng-if="!main.writeBanner" style="padding: 20px; font-size: 18px; font-weight: 800;">Please place phone on token</div>
+			<div ng-if="main.writeBanner" style="padding: 10px 20px; font-size: 14px; font-weight: 700; color: #ff6b6b; word-break: break-word;">{{main.writeBanner}}<br>Place tag again to retry.</div>
 			<button class="btn btn-danger" ng-click="main.cancel()">Cancel</button>
+			<div id="tag-info-card" ng-if="main.dialog == 'write' && main.settings.showDebugInfo" style="margin: 15px; padding: 12px; border-radius: 8px; background: #222; color: #fff; text-align: center;">
+				<span style="font-size: 12px; color: #aaa; text-transform: uppercase;">Scanned Tag</span>
+				<h3 id="detected-character-name" style="margin: 6px 0 2px 0;">{{main.detectedName || 'No Tag Detected'}}</h3>
+				<p id="detected-character-id" style="margin: 0; font-size: 13px; color: #888;">{{main.detectedId ? 'ID: ' + main.detectedId : 'Tap an NTAG213 tag to inspect'}}</p>
+				<div ng-if="main.tagHistory.length" style="margin-top: 10px; text-align: left; max-height: 150px; overflow-y: auto;">
+					<h5 style="color: #aaa; text-transform: uppercase; font-size: 11px; margin: 0 0 6px 0;">History</h5>
+					<ul style="list-style: none; padding: 0; margin: 0;">
+						<li ng-repeat="entry in main.tagHistory track by $index" style="padding: 5px 0; border-bottom: 1px solid #333;">
+							<div style="color: #fff; font-weight: 600;">{{entry.name}}</div>
+							<div style="color: #888; font-size: 12px;">{{entry.time}} · ID: {{entry.id || '—'}}, UID: {{entry.uid}}</div>
+						</li>
+					</ul>
+				</div>
+				<div ng-if="main.debugInfo" style="margin-top: 10px; padding: 8px; background: #111; border-radius: 4px; font-size: 10px; color: #0f0; text-align: left; word-break: break-all; font-family: monospace;">
+					UID: {{main.debugInfo.uid}}<br>
+					P24: {{main.debugInfo.page24}}<br>
+					P25: {{main.debugInfo.page25}}<br>
+					P26: {{main.debugInfo.page26}}<br>
+					P27: {{main.debugInfo.page27}}<br>
+					LOCK: {{main.debugInfo.lock}}<br>
+					DYNLOCK: {{main.debugInfo.dynLock}}<br>
+					RAW: {{main.debugInfo.raw}}<br>
+					CHAR: {{main.debugInfo.character}}<br>
+					BUILD: {{main.debugInfo.build}}<br>
+					WRITE_ERROR: {{main.writeError}}
+				</div>
+			</div>
 		</div>
 		<div class="settings-overlay" ng-if="main.customDialog">
 			<div class="settings-panel">

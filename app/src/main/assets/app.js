@@ -62743,7 +62743,7 @@ var AndroidApp = window.AndroidApp || function () {
 	api.readTag = function (page) {
 		// console.log(' READTAG STUB',page)
 		if (page == 0x00) return new Buffer('04000000000080', 'hex').toString('base64');
-		if (page == 0x24) return new Buffer('00000000 EE030000 00000000 00010000'.replace(/ /g, ''), 'hex').toString('base64');
+		if (page == 0x24) return new Buffer('00000000 EE030000 00000000 01000000'.replace(/ /g, ''), 'hex').toString('base64');
 		return '';
 	}, api.writeTag = function (page, data) {
 		return console.log('WRITETAG STUB', page, new Buffer(data, 'base64').toString('hex'));
@@ -62774,9 +62774,13 @@ var API = function (_EventEmitter) {
 		});
 		ee.on('tagDetected', function () {
 			$rootScope.$emit('tagDetected');
-			var token = new Token(_this, true);
-			_this.emit('token', token);
-			$rootScope.$emit('token', token);
+			try {
+				var token = new Token(_this, true);
+				_this.emit('token', token);
+				$rootScope.$emit('token', token);
+			} catch (err) {
+				console.error('legacy Token read failed', err);
+			}
 		});
 		return _this;
 	}
@@ -62786,6 +62790,36 @@ var API = function (_EventEmitter) {
 		value: function readTag(page, cb) {
 			cb = cb || function () {};
 			var ret = AndroidApp.readTag(page);
+			if (ret === null || ret === undefined) {
+				var detail = (AndroidApp.getLastError && AndroidApp.getLastError()) || 'no data (tag read failed)';
+				var err = new Error('Native readTag(0x' + page.toString(16) + ') ' + detail);
+				cb(err);
+				throw err;
+			}
+			ret = new Buffer(ret, 'base64');
+			cb(null, ret);
+			return ret;
+		}
+	}, {
+		key: 'readTagMulti',
+		value: function readTagMulti(pages, cb) {
+			cb = cb || function () {};
+			if (!AndroidApp.readTagMulti) {
+				// Fallback for environments without the combined native call.
+				var buffers = pages.map(function (p) {
+					return this.readTag(p);
+				}, this);
+				var joined = Buffer.concat(buffers);
+				cb(null, joined);
+				return joined;
+			}
+			var ret = AndroidApp.readTagMulti(pages.join(','));
+			if (ret === null || ret === undefined) {
+				var detail = (AndroidApp.getLastError && AndroidApp.getLastError()) || 'no data (tag read failed)';
+				var err = new Error('Native readTagMulti(' + pages.join(',') + ') ' + detail);
+				cb(err);
+				throw err;
+			}
 			ret = new Buffer(ret, 'base64');
 			cb(null, ret);
 			return ret;
@@ -62796,6 +62830,32 @@ var API = function (_EventEmitter) {
 			cb = cb || function () {};
 			var payload = new Buffer(data, 'hex');
 			var ret = AndroidApp.writeTag(page, payload.toString('base64'));
+			cb(null, ret);
+			return ret;
+		}
+	}, {
+		key: 'writeTagMulti',
+		value: function writeTagMulti(writes, cb) {
+			cb = cb || function () {};
+			if (!AndroidApp.writeTagMulti) {
+				var ok = true;
+				writes.forEach(function (w) {
+					ok = this.writeTag(w.page, w.data) && ok;
+				}, this);
+				cb(null, ok);
+				return ok;
+			}
+			var pages = writes.map(function (w) { return w.page; }).join(',');
+			var datas = writes.map(function (w) {
+				return new Buffer(w.data, 'hex').toString('base64');
+			}).join(',');
+			var ret = AndroidApp.writeTagMulti(pages, datas);
+			if (!ret) {
+				var detail = (AndroidApp.getLastError && AndroidApp.getLastError()) || 'write failed';
+				var err = new Error('Native writeTagMulti(' + pages + ') ' + detail);
+				cb(err);
+				throw err;
+			}
 			cb(null, ret);
 			return ret;
 		}
@@ -63327,6 +63387,8 @@ var MainController = function () {
 		this.detectedName = null;
 		this.detectedId = null;
 		this.debugInfo = null;
+		this.writeError = null;
+		this.writeBanner = null;
 		this.tagHistory = [];
 		this.pickerSearch = '';
 		this.franchiseGroups = buildFranchiseGroups();
@@ -63561,6 +63623,21 @@ var MainController = function () {
 				id: item.id,
 				maxUpgrades: false
 			};
+			this.writeError = null;
+			this.writeBanner = null;
+			this.dialog = 'write';
+			this.saveState();
+		}
+	}, {
+		key: 'emptyTag',
+		value: function emptyTag() {
+			this.token = {
+				character: true,
+				id: 0,
+				empty: true
+			};
+			this.writeError = null;
+			this.writeBanner = null;
 			this.dialog = 'write';
 			this.saveState();
 		}
@@ -63568,6 +63645,8 @@ var MainController = function () {
 		key: 'cancel',
 		value: function cancel() {
 			this.dialog = null;
+			this.writeError = null;
+			this.writeBanner = null;
 		}
 	}, {
 		key: 'readToken',
@@ -63577,25 +63656,45 @@ var MainController = function () {
 	}, {
 		key: 'writeToken',
 		value: function writeToken() {
+			this.writeError = null;
+			this.writeBanner = null;
 			this.dialog = 'write';
 		}
 	}, {
 		key: 'identifyTag',
 		value: function identifyTag() {
-			var uid = this.api.readTag(0x00).toString('hex').replace(/^(.{6})..(.{8}).*$/, '$1$2');
-			var buf = this.api.readTag(0x23);
+			// Read the UID block and the gameplay data block (pages 0x24-0x27)
+			// in a single native connection to avoid TagLostException caused
+			// by reconnecting between two separate JS-bridge calls.
+			var combined = this.api.readTagMulti([0x00, 0x24]);
+			var uid = combined.slice(0, 16).toString('hex').replace(/^(.{6})..(.{8}).*$/, '$1$2');
+			var buf = combined.slice(16, 32);
+			var lockBytes = new Buffer(16);
+			var dynLock = new Buffer(16);
+			try {
+				var debugData = this.api.readTagMulti([0x02, 0x28]);
+				lockBytes = debugData.slice(0, 16);
+				dynLock = debugData.slice(16, 32);
+			} catch (debugErr) {
+				console.warn('Failed to read debug lock pages:', debugErr);
+			}
 			console.log('reading', uid, buf);
 			var pagei = function pagei(p) {
-				return (p - 0x23) * 4;
+				return (p - 0x24) * 4;
 			};
 			var page = function page(p, c) {
 				return buf.slice(pagei(p), pagei(p + (c || 1)));
 			};
 			var t = {};
 			t.uid = uid.toUpperCase();
-			t.character = !buf.readUInt32LE(pagei(0x26));
 			t.debugUid = uid;
-			t.debugPage23 = buf.toString('hex');
+			t.debugPage24 = page(0x24).toString('hex');
+			t.debugPage25 = page(0x25).toString('hex');
+			t.debugPage26 = page(0x26).toString('hex');
+			t.debugPage27 = page(0x27).toString('hex');
+			t.debugLock = lockBytes.toString('hex');
+			t.debugDynLock = dynLock.toString('hex');
+
 			var raw = page(0x24, 2);
 			var isBlank = true;
 			for (var i = 0; i < raw.length; i++) {
@@ -63605,14 +63704,33 @@ var MainController = function () {
 				}
 			}
 			t.debugRaw = raw.toString('hex');
-			t.debugBuild = 'BUILD-DEBUG-002';
+			t.debugBuild = 'BUILD-DEBUG-009';
+
+			var p24 = buf.readUInt32LE(pagei(0x24));
+			var p25 = buf.readUInt32LE(pagei(0x25));
+			var p26 = buf.readUInt32LE(pagei(0x26));
+			var p27 = buf.readUInt32LE(pagei(0x27));
+
 			if (isBlank) {
+				t.vehicle = false;
+				t.character = true;
 				t.id = 0;
-			} else if (t.character) {
+			} else if (p27 === 1) {
+				// Original/upgraded vehicle: marker at 0x27, vehicle ID at 0x25.
+				t.vehicle = true;
+				t.character = false;
+				t.id = p25;
+			} else if (p26 === 0x00000100) {
+				// New/custom vehicle: marker at 0x26, vehicle ID at 0x24.
+				t.vehicle = true;
+				t.character = false;
+				t.id = p24;
+			} else {
+				// Character: encrypted ID in pages 0x24-0x25.
+				t.vehicle = false;
+				t.character = true;
 				var cc = new ld.CharCrypto();
 				t.id = cc.decrypt(t.uid, raw);
-			} else {
-				t.id = page(0x24).readUInt32LE(0);
 			}
 			console.log(t);
 			return t;
@@ -63628,7 +63746,12 @@ var MainController = function () {
 			}
 			this.debugInfo = {
 				uid: t.debugUid || t.uid,
-				page23: t.debugPage23 || '',
+				page24: t.debugPage24 || '',
+				page25: t.debugPage25 || '',
+				page26: t.debugPage26 || '',
+				page27: t.debugPage27 || '',
+				lock: t.debugLock || '',
+				dynLock: t.debugDynLock || '',
 				raw: t.debugRaw || '',
 				character: t.character,
 				build: t.debugBuild || 'unknown'
@@ -63662,40 +63785,121 @@ var MainController = function () {
 	}, {
 		key: 'tagDetected',
 		value: function tagDetected() {
-			if (this.dialog == 'read') {
-				var t = this.identifyTag();
-				this.token = t;
-				this.updateTagInfo(t);
-			} else if (this.dialog == 'write') {
-				var cc = new ld.CharCrypto();
-				var uid = this.api.readTag(0x00).toString('hex').replace(/^(.{6})..(.{8}).*$/, '$1$2');
-				var t = this.token;
-				if (t.character) {
-					var enc = cc.encrypt(uid, t.id);
-					this.api.writeTag(0x24, enc.slice(0, 8));
-					this.api.writeTag(0x25, enc.slice(8, 16));
-					this.api.writeTag(0x26, '00000000');
-				} else {
-					var buf = new Buffer(4);
-					buf.writeUInt32LE(t.id, 0);
-					if (t.maxUpgrades) {
-						var up = this.um.maxUpgrades(t.id);
-						this.api.writeTag(0x23, up.slice(0, 8));
-						this.api.writeTag(0x25, up.slice(8, 16));
+			try {
+				if (this.dialog == 'read') {
+					var t = this.identifyTag();
+					this.token = t;
+					this.updateTagInfo(t);
+				} else if (this.dialog == 'write') {
+					try {
+						var cc = new ld.CharCrypto();
+						var uidData = this.api.readTagMulti([0x00]);
+						var uid = uidData.toString('hex').replace(/^(.{6})..(.{8}).*$/, '$1$2');
+						var t = this.token;
+						var writes = [];
+						// Write data pages (0x24/0x25) FIRST, marker pages (0x26/0x27)
+						// LAST. If a data page is locked the write aborts before the
+						// markers are touched, so the tag keeps its original type
+						// instead of ending up with cleared markers and stale data.
+						if (t.empty) {
+							writes.push({ page: 0x24, data: '00000000' });
+							writes.push({ page: 0x25, data: '00000000' });
+							writes.push({ page: 0x26, data: '00000000' });
+							writes.push({ page: 0x27, data: '00000000' });
+						} else if (t.character) {
+							var enc = cc.encrypt(uid, t.id);
+							writes.push({ page: 0x24, data: enc.slice(0, 8) });
+							writes.push({ page: 0x25, data: enc.slice(8, 16) });
+							writes.push({ page: 0x26, data: '00000000' });
+							writes.push({ page: 0x27, data: '00000000' });
+						} else {
+							var buf = new Buffer(4);
+							buf.writeUInt32LE(t.id, 0);
+							if (t.maxUpgrades) {
+								var up = this.um.maxUpgrades(t.id);
+								writes.push({ page: 0x23, data: up.slice(0, 8) });
+								writes.push({ page: 0x25, data: up.slice(8, 16) });
+							}
+							writes.push({ page: 0x24, data: buf.toString('hex') });
+							writes.push({ page: 0x26, data: '00010000' });
+							writes.push({ page: 0x27, data: '00000000' });
+						}
+						this.api.writeTagMulti(writes);
+						var pwdPage = 0;
+						if (this.tagType == 'ntag213') pwdPage = 0x2B;
+						if (this.tagType == 'ntag215') pwdPage = 0x85;
+						if (this.tagType == 'ntag216') pwdPage = 0xE5;
+						if (pwdPage) {
+							try {
+								var pwd = ld.PWDGen(uid);
+								while (pwd.length < 8) pwd = '0' + pwd;
+								this.api.writeTagMulti([{ page: pwdPage, data: pwd }]);
+							} catch (pwdErr) {
+								console.warn('Password page write failed (non-fatal):', pwdErr);
+							}
+						}
+						this.writeError = null;
+						this.writeBanner = null;
+						this.dialog = null;
+					} catch (writeErr) {
+						console.error('write failed', writeErr);
+						// The native call can throw (e.g. transceive failure on the
+						// final page) even though the data was already physically
+						// written to the tag. Re-read the tag and compare against
+						// what we intended to write before reporting failure.
+						var writeSucceeded = false;
+						try {
+							var verifyTag = this.identifyTag();
+							if (t.empty) {
+								writeSucceeded = verifyTag.id === 0 || verifyTag.id === undefined || verifyTag.id === null;
+							} else if (t.character) {
+								writeSucceeded = !!verifyTag.character && verifyTag.id === t.id;
+							} else {
+								writeSucceeded = !!verifyTag.vehicle && verifyTag.id === t.id;
+							}
+						} catch (verifyErr) {
+							console.warn('Failed to verify write after error:', verifyErr);
+						}
+						if (writeSucceeded) {
+							this.writeError = null;
+							this.writeBanner = null;
+							this.dialog = null;
+						} else {
+							this.writeError = writeErr && writeErr.message ? writeErr.message : String(writeErr);
+							if (t && t.empty) {
+								this.writeBanner = 'Emptying this tag is not possible';
+							} else if (t && t.character) {
+								this.writeBanner = 'Writing characters to this tag is not possible';
+							} else if (t) {
+								this.writeBanner = 'Writing vehicles to this tag is not possible';
+							} else {
+								this.writeBanner = 'Writing to this tag is not possible';
+							}
+						}
 					}
-					this.api.writeTag(0x24, buf.toString('hex'));
-					this.api.writeTag(0x26, '00010000');
+				} else {
+					var t = this.identifyTag();
+					this.token = t;
+					this.updateTagInfo(t);
 				}
-				if (this.tagType == 'ntag213') this.api.writeTag(0x2B, ld.PWDGen(uid));
-				if (this.tagType == 'ntag215') this.api.writeTag(0x85, ld.PWDGen(uid));
-				if (this.tagType == 'ntag216') this.api.writeTag(0xE5, ld.PWDGen(uid));
-				this.dialog = null;
-			} else {
-				var t = this.identifyTag();
-				this.token = t;
-				this.updateTagInfo(t);
+			} catch (err) {
+				console.error('tagDetected failed', err);
+				this.detectedName = 'Read Error';
+				this.detectedId = null;
+				this.debugInfo = {
+					uid: '',
+					page24: '',
+					raw: '',
+					character: undefined,
+					build: 'ERROR: ' + (err && err.message ? err.message : String(err))
+				};
 			}
-			this.dialog = null;
+			// Only auto-close the dialog on success paths; a failed write sets
+			// writeBanner above and keeps this.dialog === 'write' so the user
+			// can retry instead of losing the selected token.
+			if (this.dialog != 'write' || !this.writeBanner) {
+				this.dialog = null;
+			}
 		}
 	}, {
 		key: 'charmap',
