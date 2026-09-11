@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace 'com.ld.tageditor'
+    namespace 'com.naleo.tageditor'
     compileSdkVersion 34
 
     defaultConfig {
@@ -9,7 +9,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 36
         versionCode 3
-        versionName "3.0"
+        versionName "3.1"
     }
 
     compileOptions {

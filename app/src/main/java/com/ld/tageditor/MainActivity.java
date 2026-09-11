@@ -1,4 +1,4 @@
-package com.ld.tageditor;
+package com.naleo.tageditor;
 
 import android.app.PendingIntent;
 import android.content.Intent;

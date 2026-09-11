@@ -1,4 +1,4 @@
-package com.ld.tageditor;
+package com.naleo.tageditor;
 
 import android.nfc.tech.MifareUltralight;
 import android.nfc.tech.NfcA;
