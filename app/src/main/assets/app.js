@@ -63392,6 +63392,8 @@ var MainController = function () {
 		this.token = {};
 		this.detectedName = null;
 		this.detectedId = null;
+		this.detectedType = null;
+		this.detectedSupports = null;
 		this.debugInfo = null;
 		this.writeError = null;
 		this.writeBanner = null;
@@ -63410,6 +63412,8 @@ var MainController = function () {
 			if (saved.token) this.token = saved.token;
 			if (saved.detectedName !== undefined) this.detectedName = saved.detectedName;
 			if (saved.detectedId !== undefined) this.detectedId = saved.detectedId;
+			if (saved.detectedType !== undefined) this.detectedType = saved.detectedType;
+			if (saved.detectedSupports !== undefined) this.detectedSupports = saved.detectedSupports;
 			if (saved.debugInfo !== undefined) this.debugInfo = saved.debugInfo;
 			if (saved.tagHistory) this.tagHistory = saved.tagHistory;
 			if (saved.settings) {
@@ -63425,55 +63429,6 @@ var MainController = function () {
 		});
 		this.tagType = 'ntag213';
 
-		// Exposed on global window for the native Android back-button handler (see
-		// MainActivity#backPressedCallback). Closes any open dialog/overlay
-		// (write screen, custom tag dialog, settings) and returns to the home page.
-		window.handleBackPressed = function () {
-			try {
-				if (_this.dialog) {
-					if (!$scope.$$phase) {
-						$scope.$apply(function () {
-							_this.cancel();
-						});
-					} else {
-						$scope.$eval(function () {
-							_this.cancel();
-						});
-					}
-					return 'handled';
-				}
-				if (_this.customDialog) {
-					if (!$scope.$$phase) {
-						$scope.$apply(function () {
-							_this.closeCustomTagDialog();
-						});
-					} else {
-						$scope.$eval(function () {
-							_this.closeCustomTagDialog();
-						});
-					}
-					return 'handled';
-				}
-				if (_this.showSettings) {
-					if (!$scope.$$phase) {
-						$scope.$apply(function () {
-							_this.closeSettings();
-						});
-					} else {
-						$scope.$eval(function () {
-							_this.closeSettings();
-						});
-					}
-					return 'handled';
-				}
-			} catch (e) {
-				console.error('handleBackPressed error:', e);
-			}
-			return 'unhandled';
-		};
-		try {
-			window.AndroidApp.handleBackPressed = window.handleBackPressed;
-		} catch (e) {}
 		// this.api.on('tagDetected',()=>console.log('Tag Detected'))
 		// this.api.on('token',token=>console.log(token))
 	}
@@ -63486,6 +63441,8 @@ var MainController = function () {
 					token: this.token,
 					detectedName: this.detectedName,
 					detectedId: this.detectedId,
+					detectedType: this.detectedType,
+					detectedSupports: this.detectedSupports,
 					debugInfo: this.debugInfo,
 					tagHistory: this.tagHistory,
 					settings: this.settings
@@ -63750,6 +63707,9 @@ var MainController = function () {
 			t.debugPage27 = page(0x27).toString('hex');
 			t.debugLock = lockBytes.toString('hex');
 			t.debugDynLock = dynLock.toString('hex');
+			var staticLockByte = lockBytes.length >= 3 ? lockBytes[2] : 0;
+			var dynLockByte = dynLock.length >= 1 ? dynLock[0] : 0;
+			t.gameplayLocked = (staticLockByte & 0x10) !== 0 || (dynLockByte & 0x20) !== 0;
 
 			var raw = page(0x24, 2);
 			var isBlank = true;
@@ -63797,9 +63757,13 @@ var MainController = function () {
 			if (!t) {
 				this.detectedName = 'Read Error';
 				this.detectedId = null;
+				this.detectedType = null;
+				this.detectedSupports = null;
 				this.debugInfo = null;
 				return;
 			}
+			this.detectedType = t.vehicle ? 'Vehicle' : (t.character ? 'Character' : (t.id === 0 ? 'Empty' : 'Unknown'));
+			this.detectedSupports = t.gameplayLocked ? (t.vehicle ? 'Vehicle' : (t.character && t.id !== 0 ? 'Character' : 'Locked')) : 'Any';
 			this.debugInfo = {
 				uid: t.debugUid || t.uid,
 				page24: t.debugPage24 || '',
@@ -63810,6 +63774,7 @@ var MainController = function () {
 				dynLock: t.debugDynLock || '',
 				raw: t.debugRaw || '',
 				character: t.character,
+				vehicle: t.vehicle,
 				build: t.debugBuild || 'unknown'
 			};
 			var item = tokens.find(function (cm) {
@@ -63818,6 +63783,7 @@ var MainController = function () {
 			if (t.id === 0 || t.id === undefined || t.id === null) {
 				this.detectedName = 'Empty Tag';
 				this.detectedId = null;
+				this.detectedType = 'Empty';
 			} else if (item) {
 				this.detectedName = item.name;
 				this.detectedId = t.id;
@@ -63830,6 +63796,7 @@ var MainController = function () {
 				this.tagHistory.unshift({
 					name: this.detectedName,
 					id: this.detectedId,
+					type: this.detectedType,
 					uid: t.uid,
 					time: new Date().toLocaleTimeString()
 				});
@@ -63866,11 +63833,14 @@ var MainController = function () {
 				console.error('tagDetected failed', err);
 				this.detectedName = 'Read Error';
 				this.detectedId = null;
+				this.detectedType = null;
+				this.detectedSupports = null;
 				this.debugInfo = {
 					uid: '',
 					page24: '',
 					raw: '',
 					character: undefined,
+					vehicle: undefined,
 					build: 'ERROR: ' + (err && err.message ? err.message : String(err))
 				};
 			}

@@ -202,6 +202,41 @@
                 color: #fff;
             }
 
+            .tag-type-badge {
+                display: inline-block;
+                padding: 3px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 6px;
+            }
+            .tag-type-badge.character {
+                background: #2a6496;
+                color: #fff;
+            }
+            .tag-type-badge.vehicle {
+                background: #b8860b;
+                color: #fff;
+            }
+            .tag-type-badge.empty {
+                background: #555;
+                color: #ccc;
+            }
+            .tag-type-badge.unknown {
+                background: #8B0000;
+                color: #fff;
+            }
+            .tag-type-badge.any {
+                background: #2e7d32;
+                color: #fff;
+            }
+            .tag-type-badge.locked {
+                background: #8B0000;
+                color: #fff;
+            }
+
             .form-control {
                 background-color: #2a2a2a;
                 color: #eee;
@@ -248,6 +283,10 @@
              ng-class="main.getBorderClass(main.detectedId)"
              alt="Tag Visual" />
         <h4 style="margin: 0 0 2px 0; color: #eee;">{{main.detectedName || 'No Tag Detected'}}</h4>
+        <div ng-if="main.detectedSupports" style="margin: 4px 0 6px 0;">
+          <span style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">Supports: </span>
+          <span class="tag-type-badge" ng-class="main.detectedSupports.toLowerCase()">{{main.detectedSupports}}</span>
+        </div>
         <p style="color: #aaa; font-size: 13px; margin: 0 0 10px 0;">
           <span ng-if="main.detectedId">{{main.getWorldById(main.detectedId)}}<span ng-if="main.getPackType(main.detectedId)"> · {{main.getPackType(main.detectedId)}} Pack</span><br></span>
           {{main.detectedId ? 'ID: ' + main.detectedId : 'Approach a tag to load it'}}
@@ -319,7 +358,7 @@
             <h5 style="color: #aaa; text-transform: uppercase; font-size: 11px; margin: 0 0 6px 0;">History</h5>
             <ul style="list-style: none; padding: 0; margin: 0;">
               <li ng-repeat="entry in main.tagHistory track by $index" style="padding: 5px 0; border-bottom: 1px solid #333;">
-                <div style="color: #fff; font-weight: 600;">{{entry.name}}</div>
+                <div style="color: #fff; font-weight: 600;">{{entry.name}}<span ng-if="entry.type" style="font-size: 10px; color: #aaa; font-weight: 400; margin-left: 6px;">{{entry.type}}</span></div>
                 <div style="color: #888; font-size: 12px;">{{entry.time}} · ID: {{entry.id || '—'}}, UID: {{entry.uid}}</div>
               </li>
             </ul>
@@ -334,6 +373,7 @@
             DYNLOCK: {{main.debugInfo.dynLock}}<br>
             RAW: {{main.debugInfo.raw}}<br>
             CHAR: {{main.debugInfo.character}}<br>
+            VEHICLE: {{main.debugInfo.vehicle}}<br>
             BUILD: {{main.debugInfo.build}}
           </div>
         </div>
@@ -370,7 +410,7 @@
 					<h5 style="color: #aaa; text-transform: uppercase; font-size: 11px; margin: 0 0 6px 0;">History</h5>
 					<ul style="list-style: none; padding: 0; margin: 0;">
 						<li ng-repeat="entry in main.tagHistory track by $index" style="padding: 5px 0; border-bottom: 1px solid #333;">
-							<div style="color: #fff; font-weight: 600;">{{entry.name}}</div>
+							<div style="color: #fff; font-weight: 600;">{{entry.name}}<span ng-if="entry.type" style="font-size: 10px; color: #aaa; font-weight: 400; margin-left: 6px;">{{entry.type}}</span></div>
 							<div style="color: #888; font-size: 12px;">{{entry.time}} · ID: {{entry.id || '—'}}, UID: {{entry.uid}}</div>
 						</li>
 					</ul>
@@ -385,6 +425,7 @@
 					DYNLOCK: {{main.debugInfo.dynLock}}<br>
 					RAW: {{main.debugInfo.raw}}<br>
 					CHAR: {{main.debugInfo.character}}<br>
+					VEHICLE: {{main.debugInfo.vehicle}}<br>
 					BUILD: {{main.debugInfo.build}}<br>
 					WRITE_ERROR: {{main.writeError}}
 				</div>
