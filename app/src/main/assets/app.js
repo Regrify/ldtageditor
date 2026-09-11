@@ -62757,9 +62757,14 @@ var AndroidApp = window.AndroidApp || function () {
 var EventEmitter = require('events').EventEmitter;
 
 var ee = new EventEmitter();
-AndroidApp.tagDetected = function () {
+window.tagDetected = function () {
 	ee.emit('tagDetected');
 };
+try {
+	AndroidApp.tagDetected = function () {
+		ee.emit('tagDetected');
+	};
+} catch (e) {}
 
 var API = function (_EventEmitter) {
 	_inherits(API, _EventEmitter);
@@ -63373,7 +63378,7 @@ function buildFranchiseGroups() {
 var UpgradeManager = require('./UpgradeManager.js');
 
 var MainController = function () {
-	function MainController($scope, $http, API) {
+	function MainController($scope, $http, API, $timeout) {
 		var _this = this;
 
 		_classCallCheck(this, MainController);
@@ -63382,6 +63387,7 @@ var MainController = function () {
 		this.um = new UpgradeManager();
 		window.u = this.um;
 		this.$scope = $scope;
+		this.$timeout = $timeout;
 		this.api = API;
 		this.token = {};
 		this.detectedName = null;
@@ -63418,6 +63424,56 @@ var MainController = function () {
 			});
 		});
 		this.tagType = 'ntag213';
+
+		// Exposed on global window for the native Android back-button handler (see
+		// MainActivity#backPressedCallback). Closes any open dialog/overlay
+		// (write screen, custom tag dialog, settings) and returns to the home page.
+		window.handleBackPressed = function () {
+			try {
+				if (_this.dialog) {
+					if (!$scope.$$phase) {
+						$scope.$apply(function () {
+							_this.cancel();
+						});
+					} else {
+						$scope.$eval(function () {
+							_this.cancel();
+						});
+					}
+					return 'handled';
+				}
+				if (_this.customDialog) {
+					if (!$scope.$$phase) {
+						$scope.$apply(function () {
+							_this.closeCustomTagDialog();
+						});
+					} else {
+						$scope.$eval(function () {
+							_this.closeCustomTagDialog();
+						});
+					}
+					return 'handled';
+				}
+				if (_this.showSettings) {
+					if (!$scope.$$phase) {
+						$scope.$apply(function () {
+							_this.closeSettings();
+						});
+					} else {
+						$scope.$eval(function () {
+							_this.closeSettings();
+						});
+					}
+					return 'handled';
+				}
+			} catch (e) {
+				console.error('handleBackPressed error:', e);
+			}
+			return 'unhandled';
+		};
+		try {
+			window.AndroidApp.handleBackPressed = window.handleBackPressed;
+		} catch (e) {}
 		// this.api.on('tagDetected',()=>console.log('Tag Detected'))
 		// this.api.on('token',token=>console.log(token))
 	}
@@ -63770,7 +63826,7 @@ var MainController = function () {
 				this.detectedId = t.id;
 			}
 
-			if (!this.tagHistory.length || this.tagHistory[0].uid !== t.uid) {
+			if (!this.tagHistory.length || this.tagHistory[0].uid !== t.uid || this.tagHistory[0].id !== this.detectedId) {
 				this.tagHistory.unshift({
 					name: this.detectedName,
 					id: this.detectedId,
@@ -63791,92 +63847,16 @@ var MainController = function () {
 					this.token = t;
 					this.updateTagInfo(t);
 				} else if (this.dialog == 'write') {
-					try {
-						var cc = new ld.CharCrypto();
-						var uidData = this.api.readTagMulti([0x00]);
-						var uid = uidData.toString('hex').replace(/^(.{6})..(.{8}).*$/, '$1$2');
-						var t = this.token;
-						var writes = [];
-						// Write data pages (0x24/0x25) FIRST, marker pages (0x26/0x27)
-						// LAST. If a data page is locked the write aborts before the
-						// markers are touched, so the tag keeps its original type
-						// instead of ending up with cleared markers and stale data.
-						if (t.empty) {
-							writes.push({ page: 0x24, data: '00000000' });
-							writes.push({ page: 0x25, data: '00000000' });
-							writes.push({ page: 0x26, data: '00000000' });
-							writes.push({ page: 0x27, data: '00000000' });
-						} else if (t.character) {
-							var enc = cc.encrypt(uid, t.id);
-							writes.push({ page: 0x24, data: enc.slice(0, 8) });
-							writes.push({ page: 0x25, data: enc.slice(8, 16) });
-							writes.push({ page: 0x26, data: '00000000' });
-							writes.push({ page: 0x27, data: '00000000' });
-						} else {
-							var buf = new Buffer(4);
-							buf.writeUInt32LE(t.id, 0);
-							if (t.maxUpgrades) {
-								var up = this.um.maxUpgrades(t.id);
-								writes.push({ page: 0x23, data: up.slice(0, 8) });
-								writes.push({ page: 0x25, data: up.slice(8, 16) });
-							}
-							writes.push({ page: 0x24, data: buf.toString('hex') });
-							writes.push({ page: 0x26, data: '00010000' });
-							writes.push({ page: 0x27, data: '00000000' });
-						}
-						this.api.writeTagMulti(writes);
-						var pwdPage = 0;
-						if (this.tagType == 'ntag213') pwdPage = 0x2B;
-						if (this.tagType == 'ntag215') pwdPage = 0x85;
-						if (this.tagType == 'ntag216') pwdPage = 0xE5;
-						if (pwdPage) {
-							try {
-								var pwd = ld.PWDGen(uid);
-								while (pwd.length < 8) pwd = '0' + pwd;
-								this.api.writeTagMulti([{ page: pwdPage, data: pwd }]);
-							} catch (pwdErr) {
-								console.warn('Password page write failed (non-fatal):', pwdErr);
-							}
-						}
-						this.writeError = null;
-						this.writeBanner = null;
-						this.dialog = null;
-					} catch (writeErr) {
-						console.error('write failed', writeErr);
-						// The native call can throw (e.g. transceive failure on the
-						// final page) even though the data was already physically
-						// written to the tag. Re-read the tag and compare against
-						// what we intended to write before reporting failure.
-						var writeSucceeded = false;
-						try {
-							var verifyTag = this.identifyTag();
-							if (t.empty) {
-								writeSucceeded = verifyTag.id === 0 || verifyTag.id === undefined || verifyTag.id === null;
-							} else if (t.character) {
-								writeSucceeded = !!verifyTag.character && verifyTag.id === t.id;
-							} else {
-								writeSucceeded = !!verifyTag.vehicle && verifyTag.id === t.id;
-							}
-						} catch (verifyErr) {
-							console.warn('Failed to verify write after error:', verifyErr);
-						}
-						if (writeSucceeded) {
-							this.writeError = null;
-							this.writeBanner = null;
-							this.dialog = null;
-						} else {
-							this.writeError = writeErr && writeErr.message ? writeErr.message : String(writeErr);
-							if (t && t.empty) {
-								this.writeBanner = 'Emptying this tag is not possible';
-							} else if (t && t.character) {
-								this.writeBanner = 'Writing characters to this tag is not possible';
-							} else if (t) {
-								this.writeBanner = 'Writing vehicles to this tag is not possible';
-							} else {
-								this.writeBanner = 'Writing to this tag is not possible';
-							}
-						}
-					}
+					// Defer the actual (blocking) native write to the next digest
+					// cycle so Angular can finish updating the UI before the
+					// synchronous NFC write call blocks the JS thread.
+					this.writeError = null;
+					this.writeBanner = null;
+					var self = this;
+					this.$timeout(function () {
+						self.performWrite();
+					}, 30);
+					return;
 				} else {
 					var t = this.identifyTag();
 					this.token = t;
@@ -63899,6 +63879,116 @@ var MainController = function () {
 			// can retry instead of losing the selected token.
 			if (this.dialog != 'write' || !this.writeBanner) {
 				this.dialog = null;
+			}
+		}
+	}, {
+		key: 'performWrite',
+		value: function performWrite() {
+			try {
+				var cc = new ld.CharCrypto();
+				var uidData = this.api.readTagMulti([0x00]);
+				var uid = uidData.toString('hex').replace(/^(.{6})..(.{8}).*$/, '$1$2');
+				var t = this.token;
+				var writes = [];
+				// Write data pages (0x24/0x25) FIRST, marker pages (0x26/0x27)
+				// LAST. If a data page is locked the write aborts before the
+				// markers are touched, so the tag keeps its original type
+				// instead of ending up with cleared markers and stale data.
+				if (t.empty) {
+					writes.push({ page: 0x24, data: '00000000' });
+					writes.push({ page: 0x25, data: '00000000' });
+					writes.push({ page: 0x26, data: '00000000' });
+					writes.push({ page: 0x27, data: '00000000' });
+				} else if (t.character) {
+					var enc = cc.encrypt(uid, t.id);
+					writes.push({ page: 0x24, data: enc.slice(0, 8) });
+					writes.push({ page: 0x25, data: enc.slice(8, 16) });
+					writes.push({ page: 0x26, data: '00000000' });
+					writes.push({ page: 0x27, data: '00000000' });
+				} else {
+					var buf = new Buffer(4);
+					buf.writeUInt32LE(t.id, 0);
+					if (t.maxUpgrades) {
+						var up = this.um.maxUpgrades(t.id);
+						writes.push({ page: 0x23, data: up.slice(0, 8) });
+						writes.push({ page: 0x25, data: up.slice(8, 16) });
+					}
+					writes.push({ page: 0x24, data: buf.toString('hex') });
+					writes.push({ page: 0x26, data: '00010000' });
+					writes.push({ page: 0x27, data: '00000000' });
+				}
+				this.api.writeTagMulti(writes);
+				var pwdPage = 0;
+				if (this.tagType == 'ntag213') pwdPage = 0x2B;
+				if (this.tagType == 'ntag215') pwdPage = 0x85;
+				if (this.tagType == 'ntag216') pwdPage = 0xE5;
+				if (pwdPage) {
+					try {
+						var pwd = ld.PWDGen(uid);
+						while (pwd.length < 8) pwd = '0' + pwd;
+						this.api.writeTagMulti([{ page: pwdPage, data: pwd }]);
+					} catch (pwdErr) {
+						console.warn('Password page write failed (non-fatal):', pwdErr);
+					}
+				}
+				var updatedTag = null;
+				try {
+					updatedTag = this.identifyTag();
+				} catch (readBackErr) {
+					console.warn('Post-write identifyTag failed:', readBackErr);
+				}
+				if (!updatedTag) {
+					updatedTag = {
+						uid: uid ? uid.toUpperCase() : (t.uid || ''),
+						debugUid: uid || t.uid || '',
+						character: !t.empty && t.character,
+						vehicle: !t.empty && !t.character,
+						id: t.empty ? 0 : t.id
+					};
+				}
+				this.token = updatedTag;
+				this.updateTagInfo(updatedTag);
+				this.writeError = null;
+				this.writeBanner = null;
+				this.dialog = null;
+			} catch (writeErr) {
+				console.error('write failed', writeErr);
+				// The native call can throw (e.g. transceive failure on the
+				// final page) even though the data was already physically
+				// written to the tag. Re-read the tag and compare against
+				// what we intended to write before reporting failure.
+				var writeSucceeded = false;
+				var verifyTag = null;
+				try {
+					verifyTag = this.identifyTag();
+					if (t.empty) {
+						writeSucceeded = verifyTag.id === 0 || verifyTag.id === undefined || verifyTag.id === null;
+					} else if (t.character) {
+						writeSucceeded = !!verifyTag.character && verifyTag.id === t.id;
+					} else {
+						writeSucceeded = !!verifyTag.vehicle && verifyTag.id === t.id;
+					}
+				} catch (verifyErr) {
+					console.warn('Failed to verify write after error:', verifyErr);
+				}
+				if (writeSucceeded) {
+					this.token = verifyTag;
+					this.updateTagInfo(verifyTag);
+					this.writeError = null;
+					this.writeBanner = null;
+					this.dialog = null;
+				} else {
+					this.writeError = writeErr && writeErr.message ? writeErr.message : String(writeErr);
+					if (t && t.empty) {
+						this.writeBanner = 'Emptying this tag is not possible';
+					} else if (t && t.character) {
+						this.writeBanner = 'Writing characters to this tag is not possible';
+					} else if (t) {
+						this.writeBanner = 'Writing vehicles to this tag is not possible';
+					} else {
+						this.writeBanner = 'Writing to this tag is not possible';
+					}
+				}
 			}
 		}
 	}, {

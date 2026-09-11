@@ -357,7 +357,9 @@
         </div>
       </div>
       <div ng-if="main.dialog != 'write' || (!main.token.id && !main.token.empty)" style="padding: 20px; font-size: 18px; font-weight: 800; text-align: center; width: 100%;"><img src="nfc_tag.png" height="200" /> </div>
-			<div ng-if="!main.writeBanner" style="padding: 20px; font-size: 18px; font-weight: 800;">Please place phone on token</div>
+			<div ng-if="!main.writeBanner" style="padding: 20px; font-size: 18px; font-weight: 800; text-align: center;">Place rear end of the device on toy tag or NFC tag
+				<div style="font-size: 13px; font-weight: 400; color: #aaa; margin-top: 8px;">Usually near the upper center of the back of the device, sometimes underneath the camera module</div>
+			</div>
 			<div ng-if="main.writeBanner" style="padding: 10px 20px; font-size: 14px; font-weight: 700; color: #ff6b6b; word-break: break-word;">{{main.writeBanner}}<br>Place tag again to retry.</div>
 			<button class="btn btn-danger" ng-click="main.cancel()">Cancel</button>
 			<div id="tag-info-card" ng-if="main.dialog == 'write' && main.settings.showDebugInfo" style="margin: 15px; padding: 12px; border-radius: 8px; background: #222; color: #fff; text-align: center;">

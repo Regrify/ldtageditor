@@ -15,6 +15,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -101,6 +102,45 @@ public class MainActivity extends AppCompatActivity {
         } catch (MalformedMimeTypeException e) {
             throw new RuntimeException("fail", e);
         }
+        getOnBackPressedDispatcher().addCallback(this, this.backPressedCallback);
+    }
+
+    private final OnBackPressedCallback backPressedCallback = new OnBackPressedCallback(true) {
+        @Override
+        public void handleOnBackPressed() {
+            if (MainActivity.this.webView == null) {
+                MainActivity.this.leaveApp();
+                return;
+            }
+            MainActivity.this.webView.evaluateJavascript(
+                    "(function(){\n" +
+                            "  try {\n" +
+                            "    if (typeof window.handleBackPressed === 'function') {\n" +
+                            "      return window.handleBackPressed();\n" +
+                            "    }\n" +
+                            "  } catch(e) {\n" +
+                            "    console.error('handleBackPressed error:', e);\n" +
+                            "  }\n" +
+                            "  return 'unhandled';\n" +
+                            "})();",
+                    new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String value) {
+                            Log.i(TAG, "handleBackPressed result: " + value);
+                            if ("\"handled\"".equals(value)) {
+                                return;
+                            }
+                            MainActivity.this.leaveApp();
+                        }
+                    }
+            );
+        }
+    };
+
+    private void leaveApp() {
+        this.backPressedCallback.setEnabled(false);
+        getOnBackPressedDispatcher().onBackPressed();
+        this.backPressedCallback.setEnabled(true);
     }
 
     @Override
